@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AM Silks Manager V19</title>
+    <title>AM Silks Manager V21</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -16,7 +16,7 @@
         .input-field:focus { border-color: #2563eb; ring: 2px; }
         .btn { padding: 10px; rounded: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center; display: flex; justify-content: center; align-items: center; gap: 5px; }
         .btn:active { transform: scale(0.98); }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 50; display: none; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 95%; max-width: 500px; border-radius: 12px; overflow: hidden; }
         iframe { width: 100%; height: 60vh; border: none; background: #eee; }
         .hidden { display: none !important; }
@@ -29,7 +29,7 @@
     <header class="card p-4 mb-4 flex justify-between items-center bg-white border-t-4 border-indigo-600 sticky top-0 z-40">
         <div>
             <h1 class="text-xl md:text-2xl font-bold text-indigo-900">AM SILKS TRADING</h1>
-            <p class="text-xs text-gray-500 hidden md:block">Cloud Enabled | V19 Stable</p>
+            <p class="text-xs text-gray-500 hidden md:block">Cloud Enabled | V21 Stable</p>
         </div>
         <div class="flex gap-2 items-center">
             <div id="syncLoader" class="loader hidden"></div>
@@ -49,7 +49,7 @@
                     <div id="foundBadge" class="hidden px-2 py-0.5 bg-green-200 text-green-800 text-[10px] rounded-full font-bold">SAVED</div>
                 </div>
                 <div class="flex gap-2 mb-2">
-                    <input type="tel" id="mobileNumber" placeholder="Mobile (Search)" list="savedNumbers" class="input-field font-bold w-1/3" oninput="fetchCustomerDetails()">
+                    <input type="tel" id="mobileNumber" placeholder="Mobile (Search)" list="savedNumbers" class="input-field font-bold w-1/3" oninput="fetchCustomerDetails()" autocomplete="off">
                     <datalist id="savedNumbers"></datalist>
                     <input type="text" id="customerName" placeholder="Customer Name" class="input-field w-2/3">
                 </div>
@@ -185,7 +185,7 @@
                 <iframe id="pdfFrame" class="w-full h-full"></iframe>
                 <div id="mobilePdfMsg" class="hidden absolute inset-0 flex flex-col justify-center items-center bg-white p-5 text-center">
                     <p class="font-bold text-lg mb-2">PDF Generated!</p>
-                    <p class="text-sm text-gray-500">Tap 'Open PDF' below to view.</p>
+                    <p class="text-sm text-gray-500">Tap below to open.</p>
                 </div>
             </div>
             <div class="p-3 bg-white border-t flex gap-2">
@@ -222,7 +222,7 @@
     </div>
 
     <script>
-        // *** UPDATED URL ADDED HERE ***
+        // *** UPDATED URL ***
         const SHEET_URL = "https://script.google.com/macros/s/AKfycbzp1p3UXK7T57XBFuKu4QnRYsiTwFu4oVj4r_0ipeGo1oEKbaIfIRlgQap6tfwC1I0u/exec";
         
         let cart = [];
@@ -236,14 +236,69 @@
             updateRoomOptions(); 
             loadSavedNumbers();
             document.getElementById('paymentDate').valueAsDate = new Date();
-            // Mobile check to show/hide iframe vs download button
             if(/Android|iPhone/i.test(navigator.userAgent)) {
                 document.getElementById('mobilePdfMsg').classList.remove('hidden');
                 document.getElementById('pdfFrame').classList.add('hidden');
             }
         };
 
-        // --- GOOGLE SHEET SYNC ---
+        // --- ACCOUNT LOGIC ---
+        function loadSavedNumbers() {
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            const list = document.getElementById('savedNumbers'); 
+            list.innerHTML = '';
+            Object.keys(db).forEach(n => { 
+                let opt = document.createElement('option'); 
+                opt.value = n; 
+                opt.innerText = db[n].name; 
+                list.appendChild(opt); 
+            });
+        }
+
+        function fetchCustomerDetails() {
+            const m = document.getElementById('mobileNumber').value.trim();
+            if(m.length < 3) return;
+            
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            
+            if(db[m]) {
+                document.getElementById('customerName').value = db[m].name;
+                document.getElementById('prevBalDisplay').innerText = db[m].balance.toFixed(2);
+                document.getElementById('mainPrevBal').innerText = db[m].balance.toFixed(2);
+                document.getElementById('balanceAlert').classList.remove('hidden');
+                document.getElementById('foundBadge').classList.remove('hidden');
+            } else {
+                document.getElementById('prevBalDisplay').innerText = "0.00";
+                document.getElementById('mainPrevBal').innerText = "0.00";
+                document.getElementById('balanceAlert').classList.add('hidden');
+                document.getElementById('foundBadge').classList.add('hidden');
+            }
+            updateTotals();
+        }
+
+        function saveToAccounts() {
+            const m = document.getElementById('mobileNumber').value.trim();
+            const n = document.getElementById('customerName').value.trim();
+            if(!m || !n) return alert("Enter Name & Mobile");
+            
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            
+            // Calc final balance based on screen
+            const currentTotal = cart.reduce((sum, item) => sum + item.total, 0);
+            const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
+            const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+            const advance = parseFloat(document.getElementById('advanceAmount').value) || 0;
+            const finalBal = (currentTotal + prevBal - discount) - advance;
+
+            // Save
+            db[m] = { name: n, balance: finalBal };
+            localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
+            
+            alert(`Customer ${n} Saved!`);
+            loadSavedNumbers(); 
+        }
+
+        // --- SHEET SYNC ---
         function syncToSheet(data) {
             document.getElementById('syncLoader').classList.remove('hidden');
             fetch(SHEET_URL, {
@@ -287,13 +342,7 @@
                 syncToSheet({ date, ref: globalRefNo, type: 'Advance', name: n, mobile: m, debit: 0, credit: advance, balance: newBal });
             }
 
-            // Local Save
-            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
-            db[m] = { name: n, balance: newBal };
-            localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
-
-            alert("Saved to Sheet & Local!");
-            fetchCustomerDetails();
+            saveToAccounts();
         }
 
         function saveReceipt() {
@@ -320,16 +369,14 @@
              document.getElementById('receiptModal').style.display='none';
              fetchCustomerDetails();
              
-             // Update advance view
              const curAdv = parseFloat(document.getElementById('advanceAmount').value)||0;
              document.getElementById('advanceAmount').value = curAdv + amt;
              updateTotals();
 
-             // GENERATE PDF IMMEDIATELY
+             // Force Download & Preview
              generateReceiptPDF(amt, mode, date, chq, n);
         }
 
-        // --- RECEIPT PDF (FIXED) ---
         function generateReceiptPDF(amt, mode, date, chq, name) {
             try {
                 const { jsPDF } = window.jspdf;
@@ -347,10 +394,9 @@
                 const blob = doc.output('blob');
                 currentPDFBlob = blob;
                 
-                // FORCE DOWNLOAD FOR MOBILE (Important Fix)
+                // FORCE DOWNLOAD FOR MOBILE
                 doc.save(`Receipt_${date}.pdf`);
 
-                // Also try to show preview
                 document.getElementById('pdfFrame').src = URL.createObjectURL(blob);
                 document.getElementById('pdfModal').style.display='flex';
             } catch(e) { alert("Receipt PDF Error: " + e.message); }
@@ -414,15 +460,11 @@
                         });
                     }
                     doc.autoTable({ startY: 55, head: [columns], body: data, theme: 'grid' });
-                } else if (type === 'invoice') {
-                    doc.setFontSize(12); doc.setTextColor(100);
-                    doc.text("Outstanding Balance Statement", 105, 60, null, null, "center");
                 }
 
                 let y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 5 : 70;
-                
                 const currentTotal = cart.reduce((sum, item) => sum + item.total, 0);
-                const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
+                const prevBal = parseFloat(document.getElementById('mainPrevBal').innerText) || 0;
                 const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
                 const advance = parseFloat(document.getElementById('advanceAmount').value) || 0;
                 
@@ -544,18 +586,6 @@
             document.getElementById('currentBillTotal').innerText = t.toFixed(2);
             document.getElementById('grandTotal').innerText = (t + p - d).toFixed(2);
             document.getElementById('finalBalance').innerText = ((t + p - d) - a).toFixed(2);
-        }
-        function loadSavedNumbers() {
-            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
-            const list = document.getElementById('savedNumbers'); list.innerHTML = '';
-            Object.keys(db).forEach(n => { let opt = document.createElement('option'); opt.value = n; opt.innerText = db[n].name; list.appendChild(opt); });
-        }
-        function fetchCustomerDetails() {
-            const m = document.getElementById('mobileNumber').value.trim(); if(m.length<3) return;
-            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
-            if(db[m]) { document.getElementById('customerName').value = db[m].name; document.getElementById('prevBalDisplay').innerText = db[m].balance.toFixed(2); document.getElementById('balanceAlert').classList.remove('hidden'); document.getElementById('foundBadge').classList.remove('hidden'); } 
-            else { document.getElementById('prevBalDisplay').innerText = "0.00"; document.getElementById('balanceAlert').classList.add('hidden'); document.getElementById('foundBadge').classList.add('hidden'); }
-            updateTotals();
         }
         function editItem(i) { const item = cart[i]; editingIndex = i; document.getElementById('productCategory').value = item.cat; toggleFormFields(); const sT = document.getElementById('productType'); let hasT = false; for(let o of sT.options){if(o.value===item.type)hasT=true;} if(hasT) sT.value=item.type; else { sT.value='Other'; checkOtherType(); document.getElementById('customType').value=item.type; } document.getElementById('fabricName').value = item.fabric; document.getElementById('catalogNo').value = item.catalog||""; document.getElementById('itemSupplier').value = item.supplier; document.getElementById('width').value = item.w; document.getElementById('height').value = item.h; document.getElementById('quantity').value = item.qty; document.getElementById('pricePerUnit').value = item.price; document.getElementById('stitchingCharge').value = item.stitch; document.getElementById('fixingCharge').value = item.fix; document.getElementById('itemNote').value = item.note; document.getElementById('addBtn').innerText = "UPDATE ITEM"; document.getElementById('addBtn').classList.replace('bg-indigo-600', 'bg-orange-600'); }
     </script>
