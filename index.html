@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AM Silks Manager V12</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body { font-family: 'Roboto', sans-serif; background-color: #f8fafc; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .input-field { border: 1px solid #cbd5e1; padding: 10px; rounded: 8px; width: 100%; outline: none; transition: 0.2s; font-size: 15px; }
+        .input-field:focus { border-color: #2563eb; ring: 2px; }
+        .btn { padding: 12px; rounded: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center; display: flex; justify-content: center; align-items: center; gap: 5px; }
+        .btn:active { transform: scale(0.98); }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 50; display: none; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 95%; max-width: 500px; border-radius: 12px; overflow: hidden; }
+        iframe { width: 100%; height: 60vh; border: none; background: #eee; }
+    </style>
+</head>
+<body class="p-3 md:p-6 pb-32 max-w-7xl mx-auto">
+
+    <header class="card p-4 mb-4 flex justify-between items-center bg-white border-t-4 border-indigo-600 sticky top-0 z-40 shadow-sm">
+        <div>
+            <h1 class="text-xl md:text-2xl font-bold text-indigo-900">AM SILKS TRADING</h1>
+            <p class="text-xs text-gray-500 hidden md:block">Doha, Qatar | 📱 77070221</p>
+        </div>
+        <button onclick="resetAll()" class="btn bg-red-50 text-red-600 text-xs border border-red-200 hover:bg-red-100">
+            <i class="fas fa-plus-circle"></i> NEW ORDER
+        </button>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        <div class="lg:col-span-7 space-y-4">
+            
+            <div class="card p-4 bg-indigo-50 border-indigo-100">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-indigo-800 text-sm uppercase"><i class="fas fa-user"></i> Customer</h3>
+                    <div id="foundBadge" class="hidden px-2 py-0.5 bg-green-200 text-green-800 text-[10px] rounded-full font-bold">SAVED</div>
+                </div>
+                <div class="flex gap-2 mb-2">
+                    <input type="tel" id="mobileNumber" placeholder="Mobile (Search)" list="savedNumbers" class="input-field font-bold w-1/3" oninput="fetchCustomerDetails()">
+                    <datalist id="savedNumbers"></datalist>
+                    <input type="text" id="customerName" placeholder="Customer Name" class="input-field w-2/3">
+                </div>
+                <div id="balanceAlert" class="hidden text-xs text-red-600 font-bold flex justify-between bg-white p-2 rounded border border-red-100">
+                    <span>Previous Due:</span> <span class="text-base" id="prevBalDisplay">0.00</span>
+                </div>
+            </div>
+
+            <div class="card p-5 relative">
+                <h3 class="font-bold text-gray-700 text-sm uppercase mb-4 border-b pb-2">➕ Add Item Details</h3>
+                
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-3">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                        <select id="buildingType" class="input-field p-2 text-sm" onchange="updateRoomOptions()">
+                            <option value="House">House / Villa</option>
+                            <option value="Tower">Tower / Flat</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <input type="text" id="towerName" placeholder="Tower Name" class="input-field p-2 text-sm hidden">
+                        
+                        <select id="floor" class="input-field p-2 text-sm" onchange="toggleCustomFloor()">
+                            <option value="Ground">Ground</option><option value="First">First</option><option value="Second">Second</option><option value="Mezzanine">Mezzanine</option><option value="Other">Other</option>
+                        </select>
+                        <input type="text" id="customFloor" placeholder="Floor" class="input-field p-2 text-sm hidden">
+                        
+                        <select id="roomName" class="input-field p-2 text-sm"></select>
+                        <input type="text" id="customRoom" placeholder="Room" class="input-field p-2 text-sm hidden">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <select id="productCategory" class="input-field font-bold" onchange="toggleFormFields()">
+                        <option value="Curtain">Curtain</option><option value="Blind">Blind</option>
+                    </select>
+                    <div>
+                        <select id="productType" class="input-field" onchange="checkOtherType()"></select>
+                        <input type="text" id="customType" placeholder="Type..." class="input-field mt-1 hidden text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                    <div class="flex gap-1">
+                        <input type="text" id="fabricName" placeholder="Fab Code" class="input-field font-bold text-indigo-900 w-1/2">
+                        <input type="text" id="catalogNo" placeholder="Cat No" class="input-field text-sm bg-yellow-50 w-1/2 font-bold">
+                    </div>
+                    <div class="relative">
+                        <input type="text" id="itemSupplier" placeholder="Supplier" list="supplierList" class="input-field w-full">
+                        <datalist id="supplierList"><option value="York"><option value="Dragon"><option value="Euro"></datalist>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <input type="number" id="width" placeholder="W (cm)" class="input-field text-center" oninput="calculatePreview()">
+                    <input type="number" id="height" placeholder="H (cm)" class="input-field text-center" oninput="calculatePreview()">
+                    <input type="number" id="quantity" placeholder="Qty" value="1" class="input-field text-center font-bold bg-green-50" oninput="calculatePreview()">
+                </div>
+
+                <div class="curtain-field hidden bg-indigo-50 p-3 rounded-lg border border-indigo-100 mb-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] font-bold text-indigo-800">FULLNESS</label>
+                            <select id="fullness" class="input-field p-1 text-sm" onchange="calculatePreview()">
+                                <option value="3">Normal (1x3)</option><option value="2">Project (1x2)</option><option value="custom">Custom</option>
+                            </select>
+                            <input type="number" id="customRatio" placeholder="Ratio" class="input-field mt-1 hidden text-sm" oninput="calculatePreview()">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-indigo-800">WIDTH</label>
+                            <select id="fabricWidth" class="input-field p-1 text-sm" onchange="checkCustomFabWidth()">
+                                <option value="140">140cm</option><option value="280">280cm</option><option value="300">300cm</option><option value="310">310cm</option><option value="custom">Other</option>
+                            </select>
+                            <input type="number" id="customFabWidth" placeholder="cm" class="input-field mt-1 hidden text-sm" oninput="calculatePreview()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <input type="number" id="pricePerUnit" placeholder="Unit Price" class="input-field text-sm">
+                    <input type="number" id="stitchingCharge" placeholder="Stitch" class="input-field text-sm curtain-field hidden">
+                    <input type="number" id="fixingCharge" placeholder="Fixing" class="input-field text-sm">
+                </div>
+                <input type="text" id="itemNote" placeholder="Notes (e.g. Eyelet)" class="input-field text-sm mb-3">
+
+                <div class="bg-slate-800 text-white p-2 rounded text-xs flex justify-between mb-3">
+                    <span>Calculation:</span> <span id="calcResult" class="font-mono font-bold text-yellow-400">...</span>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="addItem()" id="addBtn" class="btn bg-indigo-600 text-white flex-1 hover:bg-indigo-700 shadow-md">ADD ITEM</button>
+                    <button onclick="clearForm()" class="btn bg-gray-200 text-gray-600 px-4">CLEAR</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 space-y-4">
+            
+            <div class="card p-4 h-64 lg:h-96 overflow-y-auto relative">
+                <h3 class="font-bold text-gray-600 text-xs uppercase sticky top-0 bg-white pb-2 border-b z-10 flex justify-between">
+                    <span>Order List</span> <span class="bg-gray-200 px-2 rounded-full" id="cartCount">0</span>
+                </h3>
+                <div id="cartItems" class="space-y-2 mt-2">
+                    <div class="text-center text-gray-400 text-sm mt-10 italic">Empty Cart</div>
+                </div>
+            </div>
+
+            <div class="card p-4 bg-white border-t-4 border-green-500">
+                <div class="grid grid-cols-2 gap-4 text-sm mb-3">
+                    <div>
+                        <p class="text-gray-500 text-xs">Current Bill</p>
+                        <p class="font-bold text-lg" id="currentBillTotal">0.00</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-orange-500 text-xs">Prev Balance</p>
+                        <p class="font-bold text-lg text-orange-600" id="mainPrevBal">0.00</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400">DISCOUNT</label>
+                        <input type="number" id="discountAmount" class="input-field py-1 text-right text-sm" value="0" oninput="updateTotals()">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-green-600">ADVANCE / PAID</label>
+                        <input type="number" id="advanceAmount" class="input-field py-1 text-right font-bold text-sm" value="0" oninput="updateTotals()">
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center border-t pt-2 mb-4">
+                    <span class="font-bold text-gray-700">Balance Due:</span>
+                    <span class="text-xl font-bold text-red-600">QAR <span id="finalBalance">0.00</span></span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="saveToAccounts()" class="btn bg-indigo-600 text-white col-span-2 text-sm shadow">SAVE ACCOUNT</button>
+                    
+                    <button onclick="openReceiptModal()" class="btn bg-green-50 text-green-700 border border-green-200 text-xs">RECEIPT</button>
+                    <button onclick="showSupplierSelect()" class="btn bg-slate-100 text-slate-700 border border-slate-300 text-xs">PO</button>
+                    
+                    <button onclick="openPreview('quotation')" class="btn bg-amber-500 text-white text-xs hover:bg-amber-600">QUOTATION</button>
+                    <button onclick="openPreview('invoice')" class="btn bg-blue-600 text-white text-xs hover:bg-blue-700">INVOICE</button>
+                    
+                    <button onclick="openPreview('production')" class="btn bg-teal-600 text-white col-span-2 text-sm shadow">WORK SHEET</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pdfModal" class="modal">
+        <div class="modal-content h-[80vh] w-[90vw] max-w-4xl flex flex-col">
+            <div class="p-3 bg-gray-100 border-b flex justify-between items-center">
+                <span class="font-bold">📄 PDF View</span>
+                <button onclick="document.getElementById('pdfModal').style.display='none'" class="text-red-500 font-bold text-xl">&times;</button>
+            </div>
+            <div class="flex-grow bg-gray-200 relative">
+                <iframe id="pdfFrame" class="w-full h-full"></iframe>
+                <div id="mobilePdfMsg" class="hidden absolute inset-0 flex flex-col justify-center items-center bg-white p-5 text-center">
+                    <p class="font-bold text-lg mb-2">PDF Generated!</p>
+                    <p class="text-sm text-gray-500">Tap 'Open PDF' below to view.</p>
+                </div>
+            </div>
+            <div class="p-3 bg-white border-t flex gap-2">
+                <button onclick="openInNewTab()" class="btn bg-blue-600 text-white flex-1 text-sm">OPEN PDF</button>
+                <button onclick="shareViaWhatsApp()" class="btn bg-green-500 text-white flex-1 text-sm">WHATSAPP</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="receiptModal" class="modal">
+        <div class="modal-content p-5">
+            <h3 class="text-center font-bold text-lg mb-4">Receive Payment</h3>
+            <div class="space-y-3">
+                <input type="number" id="receiptAmount" placeholder="Amount" class="input-field text-2xl text-center font-bold text-green-600">
+                <select id="paymentMode" class="input-field" onchange="toggleCheque()">
+                    <option>Cash</option><option>Bank Transfer</option><option>Cheque</option>
+                </select>
+                <input type="text" id="chequeNumber" placeholder="Cheque No" class="input-field hidden bg-yellow-50">
+                <input type="date" id="paymentDate" class="input-field">
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button onclick="document.getElementById('receiptModal').style.display='none'" class="btn bg-gray-200 text-gray-600 flex-1">Cancel</button>
+                <button onclick="saveReceipt()" class="btn bg-green-600 text-white flex-1">Save & Print</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="supplierModal" class="modal">
+        <div class="modal-content p-5">
+            <h3 class="font-bold mb-3 border-b pb-2">Select Supplier</h3>
+            <div id="supplierListContainer" class="space-y-2 max-h-60 overflow-y-auto"></div>
+            <button onclick="document.getElementById('supplierModal').style.display='none'" class="btn bg-red-100 text-red-600 w-full mt-3">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+        let editingIndex = -1;
+        let currentPDFBlob = null;
+        let currentDocType = '';
+        let globalRefNo = "AMS-" + Math.floor(Math.random() * 10000);
+
+        window.onload = function() {
+            toggleFormFields(); updateRoomOptions(); loadSavedNumbers();
+            document.getElementById('paymentDate').valueAsDate = new Date();
+            if(/Android|iPhone/i.test(navigator.userAgent)) {
+                document.getElementById('mobilePdfMsg').classList.remove('hidden');
+                document.getElementById('pdfFrame').classList.add('hidden');
+            }
+        };
+
+        // --- RESET ---
+        function resetAll() {
+            if(confirm("Start New Order?")) {
+                cart = [];
+                document.getElementById('mobileNumber').value = '';
+                document.getElementById('customerName').value = '';
+                document.getElementById('prevBalDisplay').innerText = "0.00";
+                document.getElementById('mainPrevBal').innerText = "0.00";
+                document.getElementById('discountAmount').value = 0;
+                document.getElementById('advanceAmount').value = 0;
+                document.getElementById('balanceAlert').classList.add('hidden');
+                document.getElementById('foundBadge').classList.add('hidden');
+                globalRefNo = "AMS-" + Math.floor(Math.random() * 10000);
+                clearForm(); renderCart(); updateTotals();
+            }
+        }
+
+        // --- ROOM LOGIC ---
+        function updateRoomOptions() {
+            const bType = document.getElementById('buildingType').value;
+            const r = document.getElementById('roomName');
+            document.getElementById('towerName').classList.toggle('hidden', bType !== 'Tower');
+            r.innerHTML = '';
+            let options = (bType === 'Tower') ? ['Room A', 'Room B', 'Room C', 'Hall', 'Kitchen', 'Other'] 
+                        : (bType === 'House' ? ['Living Room', 'Master Bed', 'Majlis', 'Hall', 'Other'] : ['Office', 'Room', 'Other']);
+            options.forEach(x => r.add(new Option(x, x)));
+        }
+        function toggleCustomFloor() { document.getElementById('customFloor').classList.toggle('hidden', document.getElementById('floor').value !== 'Other'); }
+
+        // --- PREVIEW ---
+        function calculatePreview() {
+            const cat = document.getElementById('productCategory').value;
+            const w = parseFloat(document.getElementById('width').value) || 0;
+            const h = parseFloat(document.getElementById('height').value) || 0;
+            const qty = parseFloat(document.getElementById('quantity').value) || 1;
+            const res = document.getElementById('calcResult');
+            if (cat === 'Curtain') {
+                const r = document.getElementById('fullness').value === 'custom' ? parseFloat(document.getElementById('customRatio').value) : parseFloat(document.getElementById('fullness').value);
+                let fw = (document.getElementById('fabricWidth').value === 'custom') ? parseInt(document.getElementById('customFabWidth').value) : parseInt(document.getElementById('fabricWidth').value);
+                if (!fw) fw = 140;
+                if (fw >= 280 && (h + 20) <= fw) res.innerText = `RR: ${((w/100)*r*qty).toFixed(2)}m`;
+                else res.innerText = `${Math.ceil((w*r)/140)||1} Pnls | ${(Math.ceil((w*r)/140)*((h+20)/100)*qty).toFixed(2)}m`;
+            } else res.innerText = `${(w*h/10000).toFixed(2)} SQM`;
+        }
+
+        // --- ADD ITEM ---
+        function addItem() {
+            const cat = document.getElementById('productCategory').value;
+            let type = document.getElementById('productType').value; if(type === 'Other') type = document.getElementById('customType').value || 'Custom';
+            
+            const fab = document.getElementById('fabricName').value;
+            const catNo = document.getElementById('catalogNo').value;
+            const sup = document.getElementById('itemSupplier').value;
+            const w = parseFloat(document.getElementById('width').value)||0;
+            const h = parseFloat(document.getElementById('height').value)||0;
+            const qty = parseFloat(document.getElementById('quantity').value)||1;
+            
+            const bt = document.getElementById('buildingType').value;
+            const tn = document.getElementById('towerName').value;
+            const fl = document.getElementById('floor').value === 'Other' ? document.getElementById('customFloor').value : document.getElementById('floor').value;
+            const rm = document.getElementById('buildingType').value === 'Other' ? document.getElementById('customRoom').value : document.getElementById('roomName').value;
+            const pr = parseFloat(document.getElementById('pricePerUnit').value)||0;
+            const st = parseFloat(document.getElementById('stitchingCharge').value)||0;
+            const fx = parseFloat(document.getElementById('fixingCharge').value)||0;
+            const nt = document.getElementById('itemNote').value;
+
+            let item = { cat, type, fabric: fab, catalog: catNo, supplier: sup, loc: `${fl} > ${rm}`, locData: {build:bt, tower:tn, floor:fl, room:rm}, w, h, qty, price: pr, stitch: st, fix: fx, note: nt };
+
+            if (cat === 'Curtain') {
+                const ratio = document.getElementById('fullness').value === 'custom' ? parseFloat(document.getElementById('customRatio').value) : parseFloat(document.getElementById('fullness').value);
+                let fw = (document.getElementById('fabricWidth').value === 'custom') ? parseInt(document.getElementById('customFabWidth').value) : parseInt(document.getElementById('fabricWidth').value);
+                if (!fw) fw = 140; const hm = (h + 20) / 100;
+                if (fw >= 280 && (h + 20) <= fw) { item.invQty = (w/100)*ratio*qty; item.panelCount = 1*qty; }
+                else { let p = Math.ceil((w*ratio)/140)||1; item.invQty = p*hm*qty; item.panelCount = p; }
+                item.poQty = item.invQty; item.total = (item.invQty * pr) + (st * qty) + (fx * qty);
+            } else {
+                let sqm = (w * h) / 10000; item.invQty = (sqm < 2.0 ? 2.0 : sqm) * qty; item.poQty = (sqm < 1.5 ? 1.5 : sqm) * qty; item.panelCount = qty; item.total = (item.invQty * pr) + (fx * qty);
+            }
+
+            if(editingIndex > -1) { cart[editingIndex] = item; editingIndex = -1; document.getElementById('addBtn').innerText = "ADD ITEM"; document.getElementById('addBtn').classList.replace('bg-orange-600', 'bg-indigo-600'); } 
+            else { cart.push(item); }
+            clearForm(); renderCart(); updateTotals();
+        }
+
+        // --- DATA & ACCOUNTS ---
+        function updateTotals() {
+            let t = cart.reduce((s,i) => s + i.total, 0);
+            let p = parseFloat(document.getElementById('prevBalDisplay').innerText)||0;
+            let a = parseFloat(document.getElementById('advanceAmount').value)||0;
+            let d = parseFloat(document.getElementById('discountAmount').value)||0;
+            document.getElementById('currentBillTotal').innerText = t.toFixed(2);
+            document.getElementById('mainPrevBal').innerText = p.toFixed(2);
+            document.getElementById('grandTotal').innerText = (t + p - d).toFixed(2);
+            document.getElementById('finalBalance').innerText = ((t + p - d) - a).toFixed(2);
+        }
+
+        function loadSavedNumbers() {
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            const list = document.getElementById('savedNumbers'); list.innerHTML = '';
+            Object.keys(db).forEach(n => {
+                let opt = document.createElement('option'); opt.value = n; opt.innerText = db[n].name; list.appendChild(opt);
+            });
+        }
+
+        function fetchCustomerDetails() {
+            const m = document.getElementById('mobileNumber').value.trim();
+            if(m.length<3) return;
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            if(db[m]) {
+                document.getElementById('customerName').value = db[m].name;
+                document.getElementById('prevBalDisplay').innerText = db[m].balance.toFixed(2);
+                document.getElementById('mainPrevBal').innerText = db[m].balance.toFixed(2);
+                document.getElementById('balanceAlert').classList.remove('hidden');
+                document.getElementById('foundBadge').classList.remove('hidden');
+            } else {
+                document.getElementById('prevBalDisplay').innerText = "0.00";
+                document.getElementById('mainPrevBal').innerText = "0.00";
+                document.getElementById('balanceAlert').classList.add('hidden');
+                document.getElementById('foundBadge').classList.add('hidden');
+            }
+            updateTotals();
+        }
+
+        function saveToAccounts() {
+            const m = document.getElementById('mobileNumber').value.trim();
+            const n = document.getElementById('customerName').value.trim();
+            if(!m) return alert("Enter Mobile");
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            db[m] = { name: n, balance: parseFloat(document.getElementById('finalBalance').innerText) };
+            localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
+            alert("Account Saved!"); loadSavedNumbers();
+        }
+
+        // --- PDF GENERATION (V12) ---
+        function openPreview(type, filterSupplier = null) {
+            currentDocType = type;
+            const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
+            
+            // Allow Invoice if Empty Cart but Has Balance
+            if (cart.length === 0 && prevBal === 0 && type === 'invoice') return alert("Nothing to print!");
+            // Block other docs if empty
+            if (cart.length === 0 && type !== 'invoice') return alert("No items!");
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // HEADER
+                doc.setFontSize(22); doc.setTextColor(0, 80, 160); doc.setFont("helvetica", "bold");
+                doc.text("AMSILKS TRADING W.L.L.", 105, 15, null, null, "center");
+                doc.setFontSize(10); doc.setTextColor(80); doc.setFont("helvetica", "normal");
+                doc.text("Doha - Qatar | 77070221 | info@amsilks.com", 105, 22, null, null, "center");
+
+                // TITLE & LOGIC
+                let title = "";
+                if(type === 'invoice') title = "INVOICE";
+                else if(type === 'quotation') title = "QUOTATION";
+                else if(type === 'po') title = "PURCHASE ORDER";
+                else title = "WORK SHEET";
+
+                doc.setFontSize(16); doc.setTextColor(0); doc.setFont("helvetica", "bold");
+                doc.text(title, 105, 35, null, null, "center");
+
+                let custName = document.getElementById('customerName').value || "Cash Customer";
+                let toTxt = (type === 'invoice' || type === 'quotation') ? `To: ${custName}\nMob: ${document.getElementById('mobileNumber').value}` 
+                            : (type === 'po' ? `To: ${filterSupplier}` : `To: Workshop | Ref: ${custName}`);
+
+                doc.setDrawColor(37,99,235); doc.setLineWidth(0.5); doc.line(15, 38, 195, 38);
+                doc.setFontSize(10); doc.setTextColor(0); doc.setFont("helvetica", "normal");
+                doc.text(toTxt, 15, 45);
+                doc.text(`Date: ${new Date().toLocaleDateString()}`, 195, 45, {align:'right'});
+                doc.text(`Ref: ${globalRefNo}`, 195, 50, {align:'right'});
+
+                let items = type==='po' ? cart.filter(i => i.supplier === filterSupplier) : cart;
+                
+                // TABLE
+                if (items.length > 0) {
+                    let columns, data;
+                    if (type === 'invoice' || type === 'quotation') {
+                        const hasEx = items.some(i => i.stitch>0 || i.fix>0);
+                        columns = hasEx ? ["Loc", "Description", "Size", "Qty", "St/Fix", "Total"] : ["Loc", "Description", "Size", "Qty", "Total"];
+                        data = items.map(i => {
+                            let locStr = i.locData.build === 'Tower' ? `Tower: ${i.locData.tower}\n${i.locData.floor}\n${i.locData.room}` : `${i.locData.build}\n${i.locData.floor}\n${i.locData.room}`;
+                            let desc = `${i.type}\nCode: ${i.fabric}`;
+                            if(i.catalog) desc += `\nCat: ${i.catalog}`;
+                            let row = [locStr, desc, `${i.w}x${i.h}`, i.qty];
+                            if(hasEx) row.push(`${i.stitch}/${i.fix}`);
+                            row.push(i.total.toFixed(2));
+                            return row;
+                        });
+                    } else {
+                        columns = ["Loc", "Description", "Size (WxH)", "Qty", "Fabric Qty"];
+                        data = items.map(i => {
+                            let locStr = i.locData.build === 'Tower' ? `Tower: ${i.locData.tower}\n${i.locData.floor}\n${i.locData.room}` : `${i.locData.build}\n${i.locData.floor}\n${i.locData.room}`;
+                            let desc = `${i.type}\nCode: ${i.fabric}`;
+                            if(i.catalog) desc += `\nCat: ${i.catalog}`;
+                            let fd = i.cat==='Curtain'?`${i.poQty.toFixed(2)}m (${i.panelCount}p)`:`${i.poQty.toFixed(2)}sqm`;
+                            return [locStr, desc, `${i.w}x${i.h}`, i.qty, fd];
+                        });
+                    }
+                    doc.autoTable({ startY: 55, head: [columns], body: data, theme: 'grid' });
+                } else if (type === 'invoice') {
+                    doc.setFontSize(12); doc.setTextColor(100);
+                    doc.text("Outstanding Balance Statement", 105, 60, null, null, "center");
+                }
+
+                // FOOTER
+                let y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 5 : 70;
+                
+                if(type === 'quotation') {
+                    // QUOTATION FOOTER (NO PREV BAL)
+                    const curr = parseFloat(document.getElementById('currentBillTotal').innerText);
+                    const disc = parseFloat(document.getElementById('discountAmount').value);
+                    const net = curr - disc;
+                    doc.autoTable({
+                        startY: y,
+                        body: [
+                            ["Total Amount:", curr.toFixed(2)],
+                            ["- Discount:", disc.toFixed(2)],
+                            ["NET QUOTE:", net.toFixed(2)]
+                        ],
+                        theme: 'plain', styles: { halign: 'right', fontSize: 10 }, columnStyles: {0:{cellWidth:150}, 1:{cellWidth:30, fontStyle:'bold'}}
+                    });
+                } 
+                else if(type === 'invoice') {
+                    // INVOICE FOOTER (FULL MATH)
+                    const gt = parseFloat(document.getElementById('grandTotal').innerText);
+                    const adv = parseFloat(document.getElementById('advanceAmount').value);
+                    const disc = parseFloat(document.getElementById('discountAmount').value);
+                    const bal = parseFloat(document.getElementById('finalBalance').innerText);
+                    const prev = parseFloat(document.getElementById('prevBalDisplay').innerText);
+                    const curr = parseFloat(document.getElementById('currentBillTotal').innerText);
+
+                    doc.autoTable({
+                        startY: y,
+                        body: [
+                            ["Current Amount:", curr.toFixed(2)],
+                            ["- Discount:", disc.toFixed(2)],
+                            ["+ Previous Balance:", prev.toFixed(2)],
+                            ["GRAND TOTAL:", gt.toFixed(2)],
+                            ["- Advance Paid:", adv.toFixed(2)],
+                            ["BALANCE DUE:", bal.toFixed(2)]
+                        ],
+                        theme: 'plain', styles: { halign: 'right', fontSize: 10 }, columnStyles: {0:{cellWidth:150}, 1:{cellWidth:30, fontStyle:'bold'}}
+                    });
+                }
+
+                const blob = doc.output('blob');
+                currentPDFBlob = blob;
+                document.getElementById('pdfFrame').src = URL.createObjectURL(blob);
+                document.getElementById('pdfModal').style.display='flex';
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        // --- RECEIPTS & OTHERS ---
+        function openReceiptModal() { document.getElementById('receiptModal').style.display='flex'; }
+        function toggleCheque() { document.getElementById('chequeNumber').classList.toggle('hidden', document.getElementById('paymentMode').value !== 'Cheque'); }
+        function saveReceipt() {
+             const amt = parseFloat(document.getElementById('receiptAmount').value);
+             if(amt) {
+                 const cur = parseFloat(document.getElementById('advanceAmount').value)||0;
+                 document.getElementById('advanceAmount').value = cur + amt;
+                 updateTotals();
+                 generateReceiptPDF(amt, document.getElementById('paymentMode').value, document.getElementById('paymentDate').value, document.getElementById('chequeNumber').value);
+             }
+             document.getElementById('receiptModal').style.display='none';
+        }
+        function generateReceiptPDF(amt, mode, date, chq) {
+            try {
+                const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape', 'mm', [200, 100]);
+                doc.setFontSize(18); doc.setTextColor(0, 80, 160); doc.text("PAYMENT RECEIPT", 100, 15, null, null, "center");
+                doc.setFontSize(12); doc.setTextColor(0); 
+                doc.text(`Received From: ${document.getElementById('customerName').value}`, 10, 30);
+                doc.text(`Date: ${date}`, 150, 30);
+                doc.text(`Amount: QAR ${amt.toFixed(2)}`, 10, 45);
+                doc.text(`Mode: ${mode}`, 100, 45);
+                if(chq) doc.text(`Cheque No: ${chq}`, 150, 45);
+                doc.setDrawColor(200); doc.line(10, 55, 190, 55);
+                doc.text("Thank you for your payment!", 100, 70, null, null, "center");
+                const blob = doc.output('blob'); currentPDFBlob = blob;
+                document.getElementById('pdfFrame').src = URL.createObjectURL(blob);
+                document.getElementById('pdfModal').style.display='flex';
+            } catch(e) { alert(e.message); }
+        }
+
+        // --- UTILS ---
+        function renderCart() {
+            const list = document.getElementById('cartItems'); document.getElementById('cartCount').innerText = cart.length; list.innerHTML = '';
+            if(cart.length===0) list.innerHTML = '<div class="text-center text-gray-400 text-sm mt-10 italic">Empty Cart</div>';
+            cart.forEach((i, idx) => {
+                const div = document.createElement('div'); div.className = "bg-white p-3 rounded-lg border shadow-sm flex justify-between items-center";
+                div.innerHTML = `<div><div class="font-bold text-gray-800 text-sm">${i.type} (${i.fabric})</div><div class="text-xs text-gray-500">${i.loc} | ${i.w}x${i.h}</div><div class="text-xs font-bold text-indigo-600 mt-1">Total: ${i.total.toFixed(2)}</div></div><div class="flex gap-4"><button onclick="editItem(${idx})" class="text-orange-500"><i class="fas fa-pencil-alt"></i></button><button onclick="cart.splice(${idx},1);renderCart();updateTotals()" class="text-red-500"><i class="fas fa-trash"></i></button></div>`; list.appendChild(div);
+            });
+        }
+        function clearForm() { ['width','height','fabricName','catalogNo','pricePerUnit','itemNote'].forEach(id => document.getElementById(id).value = ''); document.getElementById('calcResult').innerText = '...'; editingIndex = -1; document.getElementById('addBtn').innerText = "ADD ITEM"; document.getElementById('addBtn').classList.replace('bg-orange-600', 'bg-indigo-600'); }
+        function showSupplierSelect() { const s = [...new Set(cart.map(i => i.supplier))]; if(!s.length) return alert("No items"); const c = document.getElementById('supplierListContainer'); c.innerHTML = ''; s.forEach(sup => { const b = document.createElement('div'); b.className = "p-3 border-b font-bold active:bg-gray-100 cursor-pointer"; b.innerText = sup; b.onclick = () => { document.getElementById('supplierModal').style.display = 'none'; openPreview('po', sup); }; c.appendChild(b); }); document.getElementById('supplierModal').style.display = 'flex'; }
+        function openInNewTab() { if(currentPDFBlob) window.open(URL.createObjectURL(currentPDFBlob), '_blank'); }
+        function shareViaWhatsApp() { const t = `*AM SILKS*\nRef: ${document.getElementById('customerName').value}\nBal: ${document.getElementById('finalBalance').innerText}`; window.open(`https://wa.me/?text=${encodeURIComponent(t)}`, '_blank'); }
+        function toggleFormFields() { const cat = document.getElementById('productCategory').value; const t = document.getElementById('productType'); t.innerHTML = ''; const cf = document.querySelectorAll('.curtain-field'); if(cat === 'Curtain') { ['Heavy', 'Sheer', 'Blackout', 'Linen', 'Other'].forEach(x => t.add(new Option(x, x))); cf.forEach(e => e.classList.remove('hidden')); } else { ['Roller Blind', 'Sunscreen', 'Zebra', 'Venetian', 'Vertical', 'Roman', 'Other'].forEach(x => t.add(new Option(x, x))); cf.forEach(e => e.classList.add('hidden')); } checkOtherType(); calculatePreview(); }
+        function checkOtherType() { const v = document.getElementById('productType').value; document.getElementById('customType').classList.toggle('hidden', v !== 'Other'); }
+        function checkCustomFabWidth() { const v = document.getElementById('fabricWidth').value; const inp = document.getElementById('customFabWidth'); if(v === 'custom') { inp.classList.remove('hidden'); inp.focus(); } else { inp.classList.add('hidden'); } calculatePreview(); }
+        function editItem(i) { const item = cart[i]; editingIndex = i; document.getElementById('productCategory').value = item.cat; toggleFormFields(); const sT = document.getElementById('productType'); let hasT = false; for(let o of sT.options){if(o.value===item.type)hasT=true;} if(hasT) sT.value=item.type; else { sT.value='Other'; checkOtherType(); document.getElementById('customType').value=item.type; } document.getElementById('fabricName').value = item.fabric; document.getElementById('catalogNo').value = item.catalog||""; document.getElementById('width').value = item.w; document.getElementById('height').value = item.h; document.getElementById('quantity').value = item.qty; document.getElementById('pricePerUnit').value = item.price; document.getElementById('stitchingCharge').value = item.stitch; document.getElementById('fixingCharge').value = item.fix; document.getElementById('itemNote').value = item.note; document.getElementById('addBtn').innerText = "UPDATE ITEM"; document.getElementById('addBtn').classList.replace('bg-indigo-600', 'bg-orange-600'); }
+    </script>
+</body>
+</html>
