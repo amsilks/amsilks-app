@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AM Silks Manager V17</title>
+    <title>AM Silks Manager V17 (Receipt Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -12,15 +12,15 @@
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
         body { font-family: 'Roboto', sans-serif; background-color: #f1f5f9; }
         .card { background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .input-field { border: 1px solid #cbd5e1; padding: 12px; rounded: 8px; width: 100%; outline: none; transition: 0.2s; font-size: 16px; background: #fff; }
+        .input-field { border: 1px solid #cbd5e1; padding: 10px; rounded: 8px; width: 100%; outline: none; transition: 0.2s; font-size: 15px; background: #fff; }
         .input-field:focus { border-color: #2563eb; ring: 2px; }
-        .btn { padding: 12px; rounded: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center; display: flex; justify-content: center; align-items: center; gap: 5px; }
+        .btn { padding: 10px; rounded: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center; display: flex; justify-content: center; align-items: center; gap: 5px; }
         .btn:active { transform: scale(0.98); }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 50; display: none; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 95%; max-width: 500px; border-radius: 12px; overflow: hidden; }
         iframe { width: 100%; height: 60vh; border: none; background: #eee; }
-        .hidden { display: none !important; }
-        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3498db; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        .hidden { display: none !important; } 
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3498db; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -29,10 +29,10 @@
     <header class="card p-4 mb-4 flex justify-between items-center bg-white border-t-4 border-indigo-600 sticky top-0 z-40">
         <div>
             <h1 class="text-xl md:text-2xl font-bold text-indigo-900">AM SILKS TRADING</h1>
-            <p class="text-xs text-gray-500 hidden md:block">Cloud Enabled | V17 Stable</p>
+            <p class="text-xs text-gray-500 hidden md:block">Cloud Enabled | V17</p>
         </div>
         <div class="flex gap-2 items-center">
-            <div id="syncLoader" class="loader hidden"></div>
+            <div id="syncLoader" class="loader"></div>
             <button onclick="resetAll()" class="btn bg-red-100 text-red-600 text-xs border border-red-200 hover:bg-red-200">
                 <i class="fas fa-plus"></i> NEW
             </button>
@@ -42,14 +42,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
         <div class="lg:col-span-7 space-y-4">
-            
             <div class="card p-4 bg-indigo-50 border-indigo-100">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold text-indigo-800 text-sm uppercase"><i class="fas fa-user"></i> Customer</h3>
                     <div id="foundBadge" class="hidden px-2 py-0.5 bg-green-200 text-green-800 text-[10px] rounded-full font-bold">SAVED</div>
                 </div>
                 <div class="flex gap-2 mb-2">
-                    <input type="tel" id="mobileNumber" placeholder="Mobile (Search)" list="savedNumbers" class="input-field font-bold w-1/3" oninput="fetchCustomerDetails()" autocomplete="off">
+                    <input type="tel" id="mobileNumber" placeholder="Mobile (Search)" list="savedNumbers" class="input-field font-bold w-1/3" oninput="fetchCustomerDetails()">
                     <datalist id="savedNumbers"></datalist>
                     <input type="text" id="customerName" placeholder="Customer Name" class="input-field w-2/3">
                 </div>
@@ -63,7 +62,7 @@
                 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 bg-gray-50 p-2 rounded border">
                     <select id="buildingType" class="input-field p-2 text-sm" onchange="updateRoomOptions()"><option value="House">House</option><option value="Tower">Tower</option><option value="Other">Other</option></select>
-                    <input type="text" id="towerName" placeholder="Tower" class="input-field p-2 text-sm hidden">
+                    <input type="text" id="towerName" placeholder="Tower Name" class="input-field p-2 text-sm hidden">
                     <select id="floor" class="input-field p-2 text-sm" onchange="toggleCustomFloor()"><option>Ground</option><option>First</option><option>Mezzanine</option><option>Other</option></select>
                     <input type="text" id="customFloor" placeholder="Floor" class="input-field p-2 text-sm hidden">
                     <select id="roomName" class="input-field p-2 text-sm"></select>
@@ -178,7 +177,7 @@
     <div id="pdfModal" class="modal">
         <div class="modal-content h-[80vh] w-[90vw] max-w-4xl flex flex-col">
             <div class="p-3 bg-gray-100 border-b flex justify-between items-center">
-                <span class="font-bold">📄 Preview</span>
+                <span class="font-bold">📄 PDF View</span>
                 <button onclick="document.getElementById('pdfModal').style.display='none'" class="text-red-500 font-bold text-xl">&times;</button>
             </div>
             <div class="flex-grow bg-gray-200 relative">
@@ -223,10 +222,17 @@
 
     <script>
         const SHEET_URL = "https://script.google.com/macros/s/AKfycbzE_crOajjCF5hQYCwKAf5zBwj0kdWRFywquqAFUzA6vnNbrSzK-chKsWrFnXZ7QHpO/exec";
-        let cart = [], editingIndex = -1, currentPDFBlob = null, currentDocType = '', globalRefNo = "AMS-" + Math.floor(Math.random() * 10000);
+        
+        let cart = [];
+        let editingIndex = -1;
+        let currentPDFBlob = null;
+        let currentDocType = '';
+        let globalRefNo = "AMS-" + Math.floor(Math.random() * 10000);
 
         window.onload = function() {
-            toggleFormFields(); updateRoomOptions(); loadSavedNumbers();
+            toggleFormFields(); 
+            updateRoomOptions(); 
+            loadSavedNumbers();
             document.getElementById('paymentDate').valueAsDate = new Date();
             if(/Android|iPhone/i.test(navigator.userAgent)) {
                 document.getElementById('mobilePdfMsg').classList.remove('hidden');
@@ -234,76 +240,19 @@
             }
         };
 
-        // --- ACCOUNT LOGIC (AUTO FILL FIXED) ---
-        function loadSavedNumbers() {
-            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
-            const list = document.getElementById('savedNumbers'); 
-            list.innerHTML = '';
-            Object.keys(db).forEach(n => { 
-                let opt = document.createElement('option'); 
-                opt.value = n; 
-                opt.innerText = db[n].name; 
-                list.appendChild(opt); 
-            });
-        }
-
-        function fetchCustomerDetails() {
-            const m = document.getElementById('mobileNumber').value.trim();
-            if(m.length < 3) return; // Wait for typing
-            
-            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
-            
-            if(db[m]) {
-                document.getElementById('customerName').value = db[m].name;
-                document.getElementById('prevBalDisplay').innerText = db[m].balance.toFixed(2);
-                document.getElementById('mainPrevBal').innerText = db[m].balance.toFixed(2);
-                document.getElementById('balanceAlert').classList.remove('hidden');
-                document.getElementById('foundBadge').classList.remove('hidden');
-            } else {
-                // Only reset if it's clearly a new number (optional)
-                document.getElementById('prevBalDisplay').innerText = "0.00";
-                document.getElementById('mainPrevBal').innerText = "0.00";
-                document.getElementById('balanceAlert').classList.add('hidden');
-                document.getElementById('foundBadge').classList.add('hidden');
-            }
-            updateTotals();
-        }
-
-        function saveToAccounts() {
-            const m = document.getElementById('mobileNumber').value.trim();
-            const n = document.getElementById('customerName').value.trim();
-            if(!m || !n) return alert("Enter Name & Mobile");
-            
-            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
-            
-            // Calc final balance based on screen
-            const currentTotal = cart.reduce((sum, item) => sum + item.total, 0);
-            const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
-            const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
-            const advance = parseFloat(document.getElementById('advanceAmount').value) || 0;
-            const finalBal = (currentTotal + prevBal - discount) - advance;
-
-            // Save
-            db[m] = { name: n, balance: finalBal };
-            localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
-            
-            alert(`Customer ${n} Saved!`);
-            loadSavedNumbers(); // Refresh list immediately
-        }
-
         // --- SHEET SYNC ---
         function syncToSheet(data) {
-            document.getElementById('syncLoader').classList.remove('hidden');
+            document.getElementById('syncLoader').style.display = 'block';
             fetch(SHEET_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
             }).then(() => {
-                document.getElementById('syncLoader').classList.add('hidden');
+                document.getElementById('syncLoader').style.display = 'none';
                 console.log("Synced");
             }).catch(e => {
-                document.getElementById('syncLoader').classList.add('hidden');
+                document.getElementById('syncLoader').style.display = 'none';
                 alert("Sync Error: " + e);
             });
         }
@@ -317,10 +266,8 @@
             const t = cart.reduce((s,i) => s + i.total, 0);
             const d = parseFloat(document.getElementById('discountAmount').value)||0;
             const billTotal = t - d;
-            
             const advance = parseFloat(document.getElementById('advanceAmount').value) || 0;
             const date = new Date().toLocaleDateString();
-
             let newBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
 
             if(cart.length > 0) {
@@ -333,7 +280,12 @@
                 syncToSheet({ date, ref: globalRefNo, type: 'Advance', name: n, mobile: m, debit: 0, credit: advance, balance: newBal });
             }
 
-            saveToAccounts(); // Updates local DB
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            db[m] = { name: n, balance: newBal };
+            localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
+
+            alert("Saved to Sheet & Local!");
+            fetchCustomerDetails();
         }
 
         function saveReceipt() {
@@ -344,16 +296,15 @@
              const m = document.getElementById('mobileNumber').value;
              const n = document.getElementById('customerName').value;
 
-             if(!amt || !m) return alert("Amount/ID Missing");
+             if(!amt || !m) return alert("Amount and Customer ID required");
 
-             // Update Local
              let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
              let curBal = db[m] ? db[m].balance : 0;
              let newBal = curBal - amt;
+             
              db[m] = { name: n, balance: newBal };
              localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
 
-             // Sync Sheet
              let type = `Receipt (${mode})`;
              if(chq) type += ` #${chq}`;
              syncToSheet({ date, ref: "REC", type: type, name: n, mobile: m, debit: 0, credit: amt, balance: newBal });
@@ -361,19 +312,37 @@
              document.getElementById('receiptModal').style.display='none';
              fetchCustomerDetails();
              
-             // Update View
-             const curAdv = parseFloat(document.getElementById('advanceAmount').value)||0;
-             document.getElementById('advanceAmount').value = curAdv + amt;
-             updateTotals();
-
+             // Generate PDF Immediately
              generateReceiptPDF(amt, mode, date, chq);
         }
 
-        // --- PDF ENGINE ---
+        // --- RECEIPT PDF (FIXED) ---
+        function generateReceiptPDF(amt, mode, date, chq) {
+            currentDocType = 'receipt';
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('landscape', 'mm', [200, 100]);
+                doc.setFontSize(18); doc.setTextColor(0, 80, 160); doc.text("PAYMENT RECEIPT", 100, 15, null, null, "center");
+                doc.setFontSize(12); doc.setTextColor(0); 
+                doc.text(`Received From: ${document.getElementById('customerName').value}`, 10, 30);
+                doc.text(`Date: ${date}`, 150, 30);
+                doc.text(`Amount: QAR ${amt.toFixed(2)}`, 10, 45);
+                doc.text(`Mode: ${mode}`, 100, 45);
+                if(chq) doc.text(`Cheque No: ${chq}`, 150, 45);
+                doc.setDrawColor(200); doc.line(10, 55, 190, 55);
+                doc.text("Thank you for your payment!", 100, 70, null, null, "center");
+                
+                const blob = doc.output('blob');
+                currentPDFBlob = blob;
+                document.getElementById('pdfFrame').src = URL.createObjectURL(blob);
+                document.getElementById('pdfModal').style.display='flex';
+            } catch(e) { alert("Receipt PDF Error: " + e.message); }
+        }
+
+        // --- OTHER PDFS ---
         function openPreview(type, filterSupplier = null) {
             currentDocType = type;
             const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
-            
             if (cart.length === 0 && prevBal === 0 && (type === 'invoice' || type === 'quotation')) return alert("Nothing to print!");
             if (cart.length === 0 && type !== 'invoice' && type !== 'quotation') return alert("Cart is empty!");
 
@@ -427,13 +396,9 @@
                         });
                     }
                     doc.autoTable({ startY: 55, head: [columns], body: data, theme: 'grid' });
-                } else if (type === 'invoice') {
-                    doc.setFontSize(12); doc.setTextColor(100);
-                    doc.text("Outstanding Balance Statement", 105, 60, null, null, "center");
                 }
 
                 let y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 5 : 70;
-                
                 const currentTotal = cart.reduce((sum, item) => sum + item.total, 0);
                 const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
                 const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
@@ -469,24 +434,6 @@
             } catch (e) { alert("Error: " + e.message); }
         }
 
-        function generateReceiptPDF(amt, mode, date, chq) {
-            try {
-                const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape', 'mm', [200, 100]);
-                doc.setFontSize(18); doc.setTextColor(0, 80, 160); doc.text("PAYMENT RECEIPT", 100, 15, null, null, "center");
-                doc.setFontSize(12); doc.setTextColor(0); 
-                doc.text(`Received From: ${document.getElementById('customerName').value}`, 10, 30);
-                doc.text(`Date: ${date}`, 150, 30);
-                doc.text(`Amount: QAR ${amt.toFixed(2)}`, 10, 45);
-                doc.text(`Mode: ${mode}`, 100, 45);
-                if(chq) doc.text(`Cheque No: ${chq}`, 150, 45);
-                doc.setDrawColor(200); doc.line(10, 55, 190, 55);
-                doc.text("Thank you for your payment!", 100, 70, null, null, "center");
-                const blob = doc.output('blob'); currentPDFBlob = blob;
-                document.getElementById('pdfFrame').src = URL.createObjectURL(blob);
-                document.getElementById('pdfModal').style.display='flex';
-            } catch(e) { alert("Receipt Error: " + e.message); }
-        }
-
         // --- UTILS ---
         function toggleFormFields() { 
             const cat = document.getElementById('productCategory').value; 
@@ -497,11 +444,11 @@
             
             if(cat==='Curtain') {
                 ['Main (Heavy)', 'Sheer', 'Blackout', 'Linen', 'Velvet', 'Other'].forEach(x => t.add(new Option(x, x))); 
-                cf.classList.remove('hidden'); // Show curtain fields
+                cf.classList.remove('hidden'); 
                 st.classList.remove('hidden');
             } else {
                 ['Roller Blind', 'Sunscreen', 'Zebra', 'Venetian', 'Vertical', 'Roman', 'Other'].forEach(x => t.add(new Option(x, x))); 
-                cf.classList.add('hidden'); // Hide curtain fields
+                cf.classList.add('hidden'); 
                 st.classList.add('hidden');
             } 
             checkOtherType(); 
@@ -554,7 +501,7 @@
             } else {
                 let sqm = (w * h) / 10000; item.invQty = (sqm < 2.0 ? 2.0 : sqm) * qty; item.poQty = (sqm < 1.5 ? 1.5 : sqm) * qty; item.panelCount = qty; item.total = (item.invQty * pr) + (fx * qty);
             }
-            if(editingIndex > -1) { cart[editingIndex] = item; editingIndex = -1; document.getElementById('addBtn').innerText = "ADD ITEM"; document.getElementById('addBtn').classList.replace('bg-orange-600', 'bg-indigo-600'); } 
+            if(editingIndex > -1) { cart[editingIndex] = item; editingIndex = -1; document.getElementById('addBtn').innerText = "ADD ITEM"; document.getElementById('addBtn').classList.replace('bg-indigo-600', 'bg-indigo-600'); } 
             else { cart.push(item); }
             clearForm(); renderCart(); updateTotals();
         }
@@ -575,6 +522,18 @@
             document.getElementById('currentBillTotal').innerText = t.toFixed(2);
             document.getElementById('grandTotal').innerText = (t + p - d).toFixed(2);
             document.getElementById('finalBalance').innerText = ((t + p - d) - a).toFixed(2);
+        }
+        function loadSavedNumbers() {
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            const list = document.getElementById('savedNumbers'); list.innerHTML = '';
+            Object.keys(db).forEach(n => { let opt = document.createElement('option'); opt.value = n; opt.innerText = db[n].name; list.appendChild(opt); });
+        }
+        function fetchCustomerDetails() {
+            const m = document.getElementById('mobileNumber').value.trim(); if(m.length<3) return;
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            if(db[m]) { document.getElementById('customerName').value = db[m].name; document.getElementById('prevBalDisplay').innerText = db[m].balance.toFixed(2); document.getElementById('balanceAlert').classList.remove('hidden'); document.getElementById('foundBadge').classList.remove('hidden'); } 
+            else { document.getElementById('prevBalDisplay').innerText = "0.00"; document.getElementById('balanceAlert').classList.add('hidden'); document.getElementById('foundBadge').classList.add('hidden'); }
+            updateTotals();
         }
         function editItem(i) { const item = cart[i]; editingIndex = i; document.getElementById('productCategory').value = item.cat; toggleFormFields(); const sT = document.getElementById('productType'); let hasT = false; for(let o of sT.options){if(o.value===item.type)hasT=true;} if(hasT) sT.value=item.type; else { sT.value='Other'; checkOtherType(); document.getElementById('customType').value=item.type; } document.getElementById('fabricName').value = item.fabric; document.getElementById('catalogNo').value = item.catalog||""; document.getElementById('itemSupplier').value = item.supplier; document.getElementById('width').value = item.w; document.getElementById('height').value = item.h; document.getElementById('quantity').value = item.qty; document.getElementById('pricePerUnit').value = item.price; document.getElementById('stitchingCharge').value = item.stitch; document.getElementById('fixingCharge').value = item.fix; document.getElementById('itemNote').value = item.note; document.getElementById('addBtn').innerText = "UPDATE ITEM"; document.getElementById('addBtn').classList.replace('bg-indigo-600', 'bg-orange-600'); }
     </script>
