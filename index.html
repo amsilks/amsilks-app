@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AM Silks Manager V14</title>
+    <title>AM Silks Manager V15</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -18,8 +18,8 @@
         .btn:active { transform: scale(0.98); }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 50; display: none; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 95%; max-width: 500px; border-radius: 12px; overflow: hidden; }
-        /* Sync Loader */
-        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #2563eb; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; margin-left: 10px; }
+        iframe { width: 100%; height: 60vh; border: none; background: #eee; }
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3498db; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -28,13 +28,13 @@
     <header class="card p-4 mb-4 flex justify-between items-center bg-white border-t-4 border-indigo-600 sticky top-0 z-40">
         <div>
             <h1 class="text-xl md:text-2xl font-bold text-indigo-900">AM SILKS TRADING</h1>
-            <p class="text-xs text-gray-500 hidden md:block">Doha, Qatar | 📱 77070221</p>
+            <p class="text-xs text-gray-500 hidden md:block">Cloud Enabled | Doha, Qatar</p>
         </div>
-        <div class="flex items-center">
+        <div class="flex items-center gap-2">
+            <div id="syncLoader" class="loader"></div>
             <button onclick="resetAll()" class="btn bg-red-100 text-red-600 text-xs border border-red-200 hover:bg-red-200">
-                <i class="fas fa-plus"></i> NEW ORDER
+                <i class="fas fa-plus"></i> NEW
             </button>
-            <div id="syncIndicator" class="loader"></div>
         </div>
     </header>
 
@@ -92,7 +92,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
                     <div class="flex gap-1">
                         <input type="text" id="fabricName" placeholder="Fab Code" class="input-field font-bold text-indigo-900 w-1/2">
-                        <input type="text" id="catalogNo" placeholder="Catalog No" class="input-field text-sm bg-yellow-50 w-1/2 font-bold">
+                        <input type="text" id="catalogNo" placeholder="Cat No" class="input-field text-sm bg-yellow-50 w-1/2 font-bold">
                     </div>
                     <div class="relative">
                         <input type="text" id="itemSupplier" placeholder="Supplier" list="supplierList" class="input-field w-full">
@@ -116,13 +116,13 @@
                             <input type="number" id="customRatio" placeholder="Ratio" class="input-field mt-1 hidden text-sm" oninput="calculatePreview()">
                         </div>
                         <div>
-                            <label class="text-[10px] font-bold text-indigo-800">WIDTH / RAILROAD</label>
+                            <label class="text-[10px] font-bold text-indigo-800">WIDTH / SYSTEM</label>
                             <select id="fabricWidth" class="input-field p-1 text-sm" onchange="checkCustomFabWidth()">
                                 <option value="140">Std (140cm)</option>
-                                <option value="280">Wide (280cm)</option>
-                                <option value="300">Super (300cm)</option>
-                                <option value="310">Extra (310cm)</option>
-                                <option value="custom">Other</option>
+                                <option value="280">Railroad (280cm)</option>
+                                <option value="300">Railroad (300cm)</option>
+                                <option value="310">Railroad (310cm)</option>
+                                <option value="custom">Custom</option>
                             </select>
                             <input type="number" id="customFabWidth" placeholder="cm" class="input-field mt-1 hidden text-sm" oninput="calculatePreview()">
                         </div>
@@ -201,6 +201,26 @@
         </div>
     </div>
 
+    <div id="pdfModal" class="modal">
+        <div class="modal-content h-[80vh] w-[90vw] max-w-4xl flex flex-col">
+            <div class="p-3 bg-gray-100 border-b flex justify-between items-center">
+                <span class="font-bold">📄 PDF View</span>
+                <button onclick="document.getElementById('pdfModal').style.display='none'" class="text-red-500 font-bold text-xl">&times;</button>
+            </div>
+            <div class="flex-grow bg-gray-200 relative">
+                <iframe id="pdfFrame" class="w-full h-full"></iframe>
+                <div id="mobilePdfMsg" class="hidden absolute inset-0 flex flex-col justify-center items-center bg-white p-5 text-center">
+                    <p class="font-bold text-lg mb-2">PDF Generated!</p>
+                    <p class="text-sm text-gray-500">Tap 'Open PDF' below to view.</p>
+                </div>
+            </div>
+            <div class="p-3 bg-white border-t flex gap-2">
+                <button onclick="openInNewTab()" class="btn bg-blue-600 text-white flex-1 text-sm">OPEN PDF</button>
+                <button onclick="shareViaWhatsApp()" class="btn bg-green-500 text-white flex-1 text-sm">WHATSAPP</button>
+            </div>
+        </div>
+    </div>
+
     <div id="receiptModal" class="modal">
         <div class="modal-content p-5">
             <h3 class="text-center font-bold text-lg mb-4">Receive Payment</h3>
@@ -229,30 +249,37 @@
 
     <script>
         // --- CONFIGURATION ---
+        // NEW URL PROVIDED
         const SHEET_URL = "https://script.google.com/macros/s/AKfycbzE_crOajjCF5hQYCwKAf5zBwj0kdWRFywquqAFUzA6vnNbrSzK-chKsWrFnXZ7QHpO/exec";
         
         let cart = [];
         let editingIndex = -1;
+        let currentPDFBlob = null;
+        let currentDocType = '';
         let globalRefNo = "AMS-" + Math.floor(Math.random() * 10000);
 
         window.onload = function() {
             toggleFormFields(); updateRoomOptions(); loadSavedNumbers();
             document.getElementById('paymentDate').valueAsDate = new Date();
+            if(/Android|iPhone/i.test(navigator.userAgent)) {
+                document.getElementById('mobilePdfMsg').classList.remove('hidden');
+                document.getElementById('pdfFrame').classList.add('hidden');
+            }
         };
 
         // --- GOOGLE SHEET SYNC ---
         function syncToSheet(data) {
-            document.getElementById('syncIndicator').style.display = 'block';
+            document.getElementById('syncLoader').style.display = 'block';
             fetch(SHEET_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
             }).then(() => {
-                document.getElementById('syncIndicator').style.display = 'none';
+                document.getElementById('syncLoader').style.display = 'none';
                 console.log("Synced");
             }).catch(e => {
-                document.getElementById('syncIndicator').style.display = 'none';
+                document.getElementById('syncLoader').style.display = 'none';
                 alert("Sync Error (Check Internet): " + e);
             });
         }
@@ -263,7 +290,6 @@
             const n = document.getElementById('customerName').value;
             if(!m || !n) return alert("Enter Customer Details");
 
-            // Recalculate safely
             const t = cart.reduce((s,i) => s + i.total, 0);
             const d = parseFloat(document.getElementById('discountAmount').value)||0;
             const billTotal = t - d;
@@ -304,7 +330,6 @@
 
              if(!amt || !m) return alert("Amount and Customer ID required");
 
-             // Update Balance
              let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
              let curBal = db[m] ? db[m].balance : 0;
              let newBal = curBal - amt;
@@ -312,7 +337,6 @@
              db[m] = { name: n, balance: newBal };
              localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
 
-             // Sync
              let type = `Receipt (${mode})`;
              if(chq) type += ` #${chq}`;
              syncToSheet({ date, ref: "REC", type: type, name: n, mobile: m, debit: 0, credit: amt, balance: newBal });
@@ -320,7 +344,7 @@
              document.getElementById('receiptModal').style.display='none';
              fetchCustomerDetails();
              
-             // Update advance field just for view
+             // Update advance view
              const curAdv = parseFloat(document.getElementById('advanceAmount').value)||0;
              document.getElementById('advanceAmount').value = curAdv + amt;
              updateTotals();
@@ -328,7 +352,7 @@
              generateReceiptPDF(amt, mode, date, chq);
         }
 
-        // --- PDF GENERATION (FIXED & ROBUST) ---
+        // --- PDF ENGINE ---
         function openPreview(type, filterSupplier = null) {
             const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
             
@@ -352,7 +376,7 @@
                 let toTxt = (type === 'invoice' || type === 'quotation') ? `To: ${custName}\nMob: ${document.getElementById('mobileNumber').value}` 
                             : (type === 'po' ? `To: ${filterSupplier}` : `To: Workshop | Ref: ${custName}`);
 
-                doc.setDrawColor(200); doc.line(15, 38, 195, 38);
+                doc.setDrawColor(37,99,235); doc.setLineWidth(0.5); doc.line(15, 38, 195, 38);
                 doc.setFontSize(10); doc.setTextColor(0); doc.setFont("helvetica", "normal");
                 doc.text(toTxt, 15, 45);
                 doc.text(`Date: ${new Date().toLocaleDateString()}`, 195, 45, {align:'right'});
@@ -366,9 +390,10 @@
                         const hasEx = items.some(i => i.stitch>0 || i.fix>0);
                         columns = hasEx ? ["Loc", "Description", "Size", "Qty", "St/Fix", "Total"] : ["Loc", "Description", "Size", "Qty", "Total"];
                         data = items.map(i => {
+                            let locStr = i.locData.build === 'Tower' ? `Tower: ${i.locData.tower}\n${i.locData.floor}\n${i.locData.room}` : `${i.locData.build}\n${i.locData.floor}\n${i.locData.room}`;
                             let desc = `${i.type}\nCode: ${i.fabric}`;
                             if(i.catalog) desc += ` | Cat: ${i.catalog}`;
-                            let row = [i.loc, desc, `${i.w}x${i.h}`, i.qty];
+                            let row = [locStr, desc, `${i.w}x${i.h}`, i.qty];
                             if(hasEx) row.push(`${i.stitch}/${i.fix}`);
                             row.push(i.total.toFixed(2));
                             return row;
@@ -376,19 +401,22 @@
                     } else {
                         columns = ["Loc", "Description", "Size (WxH)", "Qty", "Fabric Qty"];
                         data = items.map(i => {
+                            let locStr = i.locData.build === 'Tower' ? `Tower: ${i.locData.tower}\n${i.locData.floor}\n${i.locData.room}` : `${i.locData.build}\n${i.locData.floor}\n${i.locData.room}`;
                             let desc = `${i.type}\nCode: ${i.fabric}`;
                             if(i.catalog) desc += ` | Cat: ${i.catalog}`;
                             let fd = i.cat==='Curtain'?`${i.poQty.toFixed(2)}m (${i.panelCount}p)`:`${i.poQty.toFixed(2)}sqm`;
-                            return [i.loc, desc, `${i.w}x${i.h}`, i.qty, fd];
+                            return [locStr, desc, `${i.w}x${i.h}`, i.qty, fd];
                         });
                     }
                     doc.autoTable({ startY: 55, head: [columns], body: data, theme: 'grid' });
+                } else if (type === 'invoice') {
+                    doc.setFontSize(12); doc.setTextColor(100);
+                    doc.text("Outstanding Balance Statement", 105, 60, null, null, "center");
                 }
 
                 // FOOTER
                 let y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 5 : 70;
                 
-                // Recalculate amounts safely
                 const currentTotal = cart.reduce((sum, item) => sum + item.total, 0);
                 const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
                 const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
@@ -417,8 +445,11 @@
                     });
                 }
 
-                doc.save(`${type}_${globalRefNo}.pdf`);
-            } catch (e) { alert("PDF Error: " + e.message); }
+                const blob = doc.output('blob');
+                currentPDFBlob = blob;
+                document.getElementById('pdfFrame').src = URL.createObjectURL(blob);
+                document.getElementById('pdfModal').style.display='flex';
+            } catch (e) { alert("Error: " + e.message); }
         }
 
         // --- RECEIPT PDF ---
@@ -434,11 +465,13 @@
                 if(chq) doc.text(`Cheque No: ${chq}`, 150, 45);
                 doc.setDrawColor(200); doc.line(10, 55, 190, 55);
                 doc.text("Thank you for your payment!", 100, 70, null, null, "center");
-                doc.save(`Receipt_${date}.pdf`);
-            } catch(e) { alert("Receipt PDF Error: " + e.message); }
+                const blob = doc.output('blob'); currentPDFBlob = blob;
+                document.getElementById('pdfFrame').src = URL.createObjectURL(blob);
+                document.getElementById('pdfModal').style.display='flex';
+            } catch(e) { alert("Receipt Error: " + e.message); }
         }
 
-        // --- STANDARD LOGIC ---
+        // --- LOGIC ---
         function calculatePreview() {
             const cat = document.getElementById('productCategory').value;
             const w = parseFloat(document.getElementById('width').value) || 0;
@@ -465,10 +498,7 @@
             const pr = parseFloat(document.getElementById('pricePerUnit').value)||0; const st = parseFloat(document.getElementById('stitchingCharge').value)||0;
             const fx = parseFloat(document.getElementById('fixingCharge').value)||0; const nt = document.getElementById('itemNote').value;
 
-            let locStr = `${fl} > ${rm}`;
-            if(bt === 'Tower' && tn) locStr = `${tn} > ${locStr}`;
-
-            let item = { cat, type, fabric: fab, catalog: catNo, supplier: sup, loc: locStr, locData: {build:bt, tower:tn, floor:fl, room:rm}, w, h, qty, price: pr, stitch: st, fix: fx, note: nt };
+            let item = { cat, type, fabric: fab, catalog: catNo, supplier: sup, loc: `${fl} > ${rm}`, locData: {build:bt, tower:tn, floor:fl, room:rm}, w, h, qty, price: pr, stitch: st, fix: fx, note: nt };
 
             if (cat === 'Curtain') {
                 const ratio = document.getElementById('fullness').value === 'custom' ? parseFloat(document.getElementById('customRatio').value) : parseFloat(document.getElementById('fullness').value);
@@ -486,6 +516,7 @@
             clearForm(); renderCart(); updateTotals();
         }
 
+        // --- HELPERS ---
         function renderCart() {
             const list = document.getElementById('cartItems'); document.getElementById('cartCount').innerText = cart.length; list.innerHTML = '';
             if(cart.length===0) list.innerHTML = '<div class="text-center text-gray-400 text-sm mt-10 italic">Empty Cart</div>';
@@ -494,9 +525,7 @@
                 div.innerHTML = `<div><div class="font-bold text-gray-800 text-sm">${i.type} (${i.fabric})</div><div class="text-xs text-gray-500">${i.loc} | ${i.w}x${i.h}</div><div class="text-xs font-bold text-indigo-600 mt-1">Total: ${i.total.toFixed(2)}</div></div><div class="flex gap-4"><button onclick="editItem(${idx})" class="text-orange-500"><i class="fas fa-pencil-alt"></i></button><button onclick="cart.splice(${idx},1);renderCart();updateTotals()" class="text-red-500"><i class="fas fa-trash"></i></button></div>`; list.appendChild(div);
             });
         }
-        
         function clearForm() { ['width','height','fabricName','catalogNo','pricePerUnit','itemNote'].forEach(id => document.getElementById(id).value = ''); document.getElementById('calcResult').innerText = '...'; editingIndex = -1; document.getElementById('addBtn').innerText = "ADD ITEM"; document.getElementById('addBtn').classList.replace('bg-orange-600', 'bg-indigo-600'); }
-        
         function updateTotals() {
             let t = cart.reduce((s,i) => s + i.total, 0);
             let p = parseFloat(document.getElementById('prevBalDisplay').innerText)||0;
@@ -506,13 +535,11 @@
             document.getElementById('grandTotal').innerText = (t + p - d).toFixed(2);
             document.getElementById('finalBalance').innerText = ((t + p - d) - a).toFixed(2);
         }
-
         function loadSavedNumbers() {
             let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
             const list = document.getElementById('savedNumbers'); list.innerHTML = '';
             Object.keys(db).forEach(n => { let opt = document.createElement('option'); opt.value = n; opt.innerText = db[n].name; list.appendChild(opt); });
         }
-
         function fetchCustomerDetails() {
             const m = document.getElementById('mobileNumber').value.trim(); if(m.length<3) return;
             let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
@@ -520,33 +547,39 @@
             else { document.getElementById('prevBalDisplay').innerText = "0.00"; document.getElementById('balanceAlert').classList.add('hidden'); document.getElementById('foundBadge').classList.add('hidden'); }
             updateTotals();
         }
-
-        function saveToAccounts() {
-            const m = document.getElementById('mobileNumber').value.trim();
-            const n = document.getElementById('customerName').value.trim();
-            if(!m) return alert("Enter Mobile");
-            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
-            // Recalc final balance
-            const currentTotal = cart.reduce((sum, item) => sum + item.total, 0);
-            const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
-            const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
-            const advance = parseFloat(document.getElementById('advanceAmount').value) || 0;
-            const finalBal = (currentTotal + prevBal - discount) - advance;
-
-            db[m] = { name: n, balance: finalBal };
-            localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
-            alert("Account Saved!"); loadSavedNumbers();
-        }
-
+        function openReceiptModal() { document.getElementById('receiptModal').style.display='flex'; }
+        function toggleCheque() { document.getElementById('chequeNumber').classList.toggle('hidden', document.getElementById('paymentMode').value !== 'Cheque'); }
+        function openInNewTab() { if(currentPDFBlob) window.open(URL.createObjectURL(currentPDFBlob), '_blank'); }
+        function shareViaWhatsApp() { const t = `*AM SILKS*\nRef: ${document.getElementById('customerName').value}\nBal: ${document.getElementById('finalBalance').innerText}`; window.open(`https://wa.me/?text=${encodeURIComponent(t)}`, '_blank'); }
         function resetAll() { if(confirm("Start New Order?")) { cart=[]; document.getElementById('mobileNumber').value=''; document.getElementById('customerName').value=''; document.getElementById('prevBalDisplay').innerText="0.00"; globalRefNo="AMS-"+Math.floor(Math.random()*10000); clearForm(); renderCart(); updateTotals(); } }
         
-        function toggleFormFields() { const cat = document.getElementById('productCategory').value; const t = document.getElementById('productType'); t.innerHTML=''; const cf = document.querySelectorAll('.curtain-field'); if(cat === 'Curtain') { ['Main (Heavy)', 'Sheer', 'Blackout', 'Linen', 'Velvet', 'Other'].forEach(x => t.add(new Option(x, x))); cf.forEach(e => e.classList.remove('hidden')); } else { ['Roller Blind', 'Sunscreen', 'Zebra', 'Venetian', 'Vertical', 'Roman', 'Other'].forEach(x => t.add(new Option(x, x))); cf.forEach(e => e.classList.add('hidden')); } checkOtherType(); calculatePreview(); }
+        function toggleFormFields() { 
+            const cat = document.getElementById('productCategory').value; 
+            const t = document.getElementById('productType'); 
+            t.innerHTML=''; 
+            const cf = document.querySelectorAll('.curtain-field'); 
+            if(cat==='Curtain') {
+                ['Main (Heavy)', 'Sheer', 'Blackout', 'Linen', 'Velvet', 'Other'].forEach(x => t.add(new Option(x, x))); 
+                cf.forEach(e => e.classList.remove('hidden'));
+            } else {
+                ['Roller Blind', 'Sunscreen', 'Zebra', 'Venetian', 'Vertical', 'Roman', 'Other'].forEach(x => t.add(new Option(x, x))); 
+                cf.forEach(e => e.classList.add('hidden'));
+            } 
+            checkOtherType(); 
+            calculatePreview(); 
+        }
         
         function checkOtherType() { document.getElementById('customType').classList.toggle('hidden', document.getElementById('productType').value !== 'Other'); }
         function checkCustomFabWidth() { document.getElementById('customFabWidth').classList.toggle('hidden', document.getElementById('fabricWidth').value !== 'custom'); calculatePreview(); }
         
-        function updateRoomOptions() { const b = document.getElementById('buildingType').value; const r = document.getElementById('roomName'); document.getElementById('towerName').classList.toggle('hidden', b!=='Tower'); r.innerHTML=''; let o = b==='Tower'?['Room A','Room B','Room C','Hall','Kitchen','Maid','Other']:(b==='House'?['Living','Master Bed','Majlis','Guest','Hall','Other']:['Office','Room','Other']); o.forEach(x=>r.add(new Option(x,x))); }
-        
+        function updateRoomOptions() { 
+            const b = document.getElementById('buildingType').value; 
+            const r = document.getElementById('roomName'); 
+            document.getElementById('towerName').classList.toggle('hidden', b!=='Tower'); 
+            r.innerHTML=''; 
+            let o = (b==='Tower')?['Room A','Room B','Room C','Hall','Kitchen','Maid','Other']:(b==='House'?['Living','Master Bed','Majlis','Guest','Hall','Other']:['Office','Room','Other']); 
+            o.forEach(x=>r.add(new Option(x,x))); 
+        }
         function toggleCustomFloor() { document.getElementById('customFloor').classList.toggle('hidden', document.getElementById('floor').value !== 'Other'); }
         
         function showSupplierSelect() { const s = [...new Set(cart.map(i => i.supplier))]; if(!s.length) return alert("No items"); const c = document.getElementById('supplierListContainer'); c.innerHTML = ''; s.forEach(sup => { const b = document.createElement('div'); b.className = "p-3 border-b font-bold active:bg-gray-100 cursor-pointer"; b.innerText = sup; b.onclick = () => { document.getElementById('supplierModal').style.display = 'none'; openPreview('po', sup); }; c.appendChild(b); }); document.getElementById('supplierModal').style.display = 'flex'; }
