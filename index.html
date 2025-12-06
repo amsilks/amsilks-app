@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AM Silks Manager V15</title>
+    <title>AM Silks Manager V16</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
         body { font-family: 'Roboto', sans-serif; background-color: #f1f5f9; }
         .card { background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .input-field { border: 1px solid #cbd5e1; padding: 10px; rounded: 8px; width: 100%; outline: none; transition: 0.2s; font-size: 15px; }
+        .input-field { border: 1px solid #cbd5e1; padding: 10px; rounded: 8px; width: 100%; outline: none; transition: 0.2s; font-size: 15px; background: #fff; }
         .input-field:focus { border-color: #2563eb; ring: 2px; }
         .btn { padding: 10px; rounded: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center; display: flex; justify-content: center; align-items: center; gap: 5px; }
         .btn:active { transform: scale(0.98); }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 50; display: none; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 95%; max-width: 500px; border-radius: 12px; overflow: hidden; }
         iframe { width: 100%; height: 60vh; border: none; background: #eee; }
-        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3498db; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
+        .hidden { display: none !important; } /* Force Hide */
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3498db; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -28,10 +29,10 @@
     <header class="card p-4 mb-4 flex justify-between items-center bg-white border-t-4 border-indigo-600 sticky top-0 z-40">
         <div>
             <h1 class="text-xl md:text-2xl font-bold text-indigo-900">AM SILKS TRADING</h1>
-            <p class="text-xs text-gray-500 hidden md:block">Cloud Enabled | Doha, Qatar</p>
+            <p class="text-xs text-gray-500 hidden md:block">Cloud Enabled | V16 Fixed</p>
         </div>
-        <div class="flex items-center gap-2">
-            <div id="syncLoader" class="loader"></div>
+        <div class="flex gap-2 items-center">
+            <div id="syncLoader" class="loader hidden"></div>
             <button onclick="resetAll()" class="btn bg-red-100 text-red-600 text-xs border border-red-200 hover:bg-red-200">
                 <i class="fas fa-plus"></i> NEW
             </button>
@@ -58,30 +59,21 @@
             </div>
 
             <div class="card p-5 relative">
-                <h3 class="font-bold text-gray-700 text-sm uppercase mb-4 border-b pb-2">➕ Add Item Details</h3>
+                <h3 class="font-bold text-gray-700 text-sm uppercase mb-4 border-b pb-2">➕ Add Item</h3>
                 
-                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-3">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-                        <select id="buildingType" class="input-field p-2 text-sm" onchange="updateRoomOptions()">
-                            <option value="House">House / Villa</option>
-                            <option value="Tower">Tower / Flat</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <input type="text" id="towerName" placeholder="Tower Name" class="input-field p-2 text-sm hidden">
-                        
-                        <select id="floor" class="input-field p-2 text-sm" onchange="toggleCustomFloor()">
-                            <option value="Ground">Ground</option><option value="First">First</option><option value="Second">Second</option><option value="Mezzanine">Mezzanine</option><option value="Other">Other</option>
-                        </select>
-                        <input type="text" id="customFloor" placeholder="Floor" class="input-field p-2 text-sm hidden">
-                        
-                        <select id="roomName" class="input-field p-2 text-sm"></select>
-                        <input type="text" id="customRoom" placeholder="Room" class="input-field p-2 text-sm hidden">
-                    </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 bg-gray-50 p-2 rounded border">
+                    <select id="buildingType" class="input-field p-2 text-sm" onchange="updateRoomOptions()"><option value="House">House</option><option value="Tower">Tower</option><option value="Other">Other</option></select>
+                    <input type="text" id="towerName" placeholder="Tower" class="input-field p-2 text-sm hidden">
+                    <select id="floor" class="input-field p-2 text-sm" onchange="toggleCustomFloor()"><option>Ground</option><option>First</option><option>Mezzanine</option><option>Other</option></select>
+                    <input type="text" id="customFloor" placeholder="Floor" class="input-field p-2 text-sm hidden">
+                    <select id="roomName" class="input-field p-2 text-sm"></select>
+                    <input type="text" id="customRoom" placeholder="Room" class="input-field p-2 text-sm hidden">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <select id="productCategory" class="input-field font-bold" onchange="toggleFormFields()">
-                        <option value="Curtain">Curtain</option><option value="Blind">Blind</option>
+                        <option value="Curtain">Curtain</option>
+                        <option value="Blind">Blind</option>
                     </select>
                     <div>
                         <select id="productType" class="input-field" onchange="checkOtherType()"></select>
@@ -89,59 +81,55 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-                    <div class="flex gap-1">
-                        <input type="text" id="fabricName" placeholder="Fab Code" class="input-field font-bold text-indigo-900 w-1/2">
-                        <input type="text" id="catalogNo" placeholder="Cat No" class="input-field text-sm bg-yellow-50 w-1/2 font-bold">
-                    </div>
-                    <div class="relative">
-                        <input type="text" id="itemSupplier" placeholder="Supplier" list="supplierList" class="input-field w-full">
-                        <datalist id="supplierList"><option value="York"><option value="Dragon"><option value="Euro"></datalist>
-                    </div>
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="fabricName" placeholder="Fab Code" class="input-field font-bold text-indigo-900 w-1/2">
+                    <input type="text" id="catalogNo" placeholder="Cat No" class="input-field text-sm bg-yellow-50 w-1/2 font-bold">
                 </div>
-
+                
                 <div class="grid grid-cols-3 gap-2 mb-3">
-                    <input type="number" id="width" placeholder="W (cm)" class="input-field text-center" oninput="calculatePreview()">
-                    <input type="number" id="height" placeholder="H (cm)" class="input-field text-center" oninput="calculatePreview()">
+                    <input type="number" id="width" placeholder="W" class="input-field text-center" oninput="calculatePreview()">
+                    <input type="number" id="height" placeholder="H" class="input-field text-center" oninput="calculatePreview()">
                     <input type="number" id="quantity" placeholder="Qty" value="1" class="input-field text-center font-bold bg-green-50" oninput="calculatePreview()">
                 </div>
 
-                <div class="curtain-field hidden bg-indigo-50 p-3 rounded-lg border border-indigo-100 mb-3">
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-[10px] font-bold text-indigo-800">FULLNESS</label>
-                            <select id="fullness" class="input-field p-1 text-sm" onchange="calculatePreview()">
-                                <option value="3">Normal (1x3)</option><option value="2">Project (1x2)</option><option value="custom">Custom</option>
-                            </select>
-                            <input type="number" id="customRatio" placeholder="Ratio" class="input-field mt-1 hidden text-sm" oninput="calculatePreview()">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-indigo-800">WIDTH / SYSTEM</label>
-                            <select id="fabricWidth" class="input-field p-1 text-sm" onchange="checkCustomFabWidth()">
-                                <option value="140">Std (140cm)</option>
-                                <option value="280">Railroad (280cm)</option>
-                                <option value="300">Railroad (300cm)</option>
-                                <option value="310">Railroad (310cm)</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                            <input type="number" id="customFabWidth" placeholder="cm" class="input-field mt-1 hidden text-sm" oninput="calculatePreview()">
-                        </div>
+                <div id="curtainOptions" class="hidden bg-indigo-50 p-3 rounded-lg border border-indigo-100 mb-3 grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] text-indigo-800 font-bold">FULLNESS</label>
+                        <select id="fullness" class="input-field p-1 text-sm" onchange="calculatePreview()">
+                            <option value="3">Normal (1x3)</option>
+                            <option value="2">Project (1x2)</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <input type="number" id="customRatio" placeholder="Ratio" class="input-field mt-1 hidden text-sm" oninput="calculatePreview()">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-indigo-800 font-bold">WIDTH / SYSTEM</label>
+                        <select id="fabricWidth" class="input-field p-1 text-sm" onchange="checkCustomFabWidth()">
+                            <option value="140">Std (140cm)</option>
+                            <option value="280">Railroad (280cm)</option>
+                            <option value="300">Railroad (300cm)</option>
+                            <option value="310">Railroad (310cm)</option>
+                            <option value="custom">Other</option>
+                        </select>
+                        <input type="number" id="customFabWidth" placeholder="cm" class="input-field mt-1 hidden text-sm" oninput="calculatePreview()">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-2 mb-3">
-                    <input type="number" id="pricePerUnit" placeholder="Unit Price" class="input-field text-sm">
+                    <input type="number" id="pricePerUnit" placeholder="Price" class="input-field text-sm">
                     <input type="number" id="stitchingCharge" placeholder="Stitch" class="input-field text-sm curtain-field hidden">
-                    <input type="number" id="fixingCharge" placeholder="Fixing" class="input-field text-sm">
+                    <input type="number" id="fixingCharge" placeholder="Fix" class="input-field text-sm">
                 </div>
-                <input type="text" id="itemNote" placeholder="Notes (e.g. Eyelet)" class="input-field text-sm mb-3">
+                <input type="text" id="itemNote" placeholder="Notes" class="input-field text-sm mb-3">
+                <input type="text" id="itemSupplier" placeholder="Supplier" list="supplierList" class="input-field text-sm mb-3">
+                <datalist id="supplierList"><option value="York"><option value="Dragon"><option value="Euro"></datalist>
 
                 <div class="bg-slate-800 text-white p-2 rounded text-xs flex justify-between mb-3">
-                    <span>Calculation:</span> <span id="calcResult" class="font-mono font-bold text-yellow-400">...</span>
+                    <span>Result:</span> <span id="calcResult" class="font-mono font-bold text-yellow-400">...</span>
                 </div>
 
                 <div class="flex gap-2">
-                    <button onclick="addItem()" id="addBtn" class="btn bg-indigo-600 text-white flex-1 hover:bg-indigo-700 shadow-md">ADD ITEM</button>
+                    <button onclick="addItem()" id="addBtn" class="btn bg-indigo-600 text-white flex-1 hover:bg-indigo-700 shadow">ADD ITEM</button>
                     <button onclick="clearForm()" class="btn bg-gray-200 text-gray-600 px-4">CLEAR</button>
                 </div>
             </div>
@@ -153,32 +141,18 @@
                 <h3 class="font-bold text-gray-600 text-xs uppercase sticky top-0 bg-white pb-2 border-b z-10 flex justify-between">
                     <span>Order List</span> <span class="bg-gray-200 px-2 rounded-full" id="cartCount">0</span>
                 </h3>
-                <div id="cartItems" class="space-y-2 mt-2">
-                    <div class="text-center text-gray-400 text-sm mt-10 italic">Empty Cart</div>
-                </div>
+                <div id="cartItems" class="space-y-2 mt-2 text-center text-gray-400 text-sm italic">Empty Cart</div>
             </div>
 
             <div class="card p-4 bg-white border-t-4 border-green-500">
                 <div class="grid grid-cols-2 gap-4 text-sm mb-3">
-                    <div>
-                        <p class="text-gray-500 text-xs">Current Bill</p>
-                        <p class="font-bold text-lg" id="currentBillTotal">0.00</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-orange-500 text-xs">Prev Balance</p>
-                        <p class="font-bold text-lg text-orange-600" id="mainPrevBal">0.00</p>
-                    </div>
+                    <div><p class="text-gray-500 text-xs">Current Bill</p><p class="font-bold text-lg" id="currentBillTotal">0.00</p></div>
+                    <div class="text-right"><p class="text-orange-500 text-xs">Prev Balance</p><p class="font-bold text-lg text-orange-600" id="mainPrevBal">0.00</p></div>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-2 mb-3">
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-400">DISCOUNT</label>
-                        <input type="number" id="discountAmount" class="input-field py-1 text-right text-sm" value="0" oninput="updateTotals()">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-green-600">ADVANCE / PAID</label>
-                        <input type="number" id="advanceAmount" class="input-field py-1 text-right font-bold text-sm" value="0" oninput="updateTotals()">
-                    </div>
+                    <div><label class="text-[10px] font-bold text-gray-400">DISCOUNT</label><input type="number" id="discountAmount" class="input-field py-1 text-right text-sm" value="0" oninput="updateTotals()"></div>
+                    <div><label class="text-[10px] font-bold text-green-600">ADVANCE</label><input type="number" id="advanceAmount" class="input-field py-1 text-right font-bold text-sm" value="0" oninput="updateTotals()"></div>
                 </div>
 
                 <div class="flex justify-between items-center border-t pt-2 mb-4">
@@ -188,13 +162,10 @@
 
                 <div class="grid grid-cols-2 gap-2">
                     <button onclick="saveInvoiceTransaction()" class="btn bg-indigo-600 text-white col-span-2 text-sm shadow">SAVE & SYNC SHEET</button>
-                    
                     <button onclick="openReceiptModal()" class="btn bg-green-50 text-green-700 border border-green-200 text-xs">RECEIPT</button>
                     <button onclick="showSupplierSelect()" class="btn bg-slate-100 text-slate-700 border border-slate-300 text-xs">PO</button>
-                    
-                    <button onclick="openPreview('quotation')" class="btn bg-amber-500 text-white text-xs hover:bg-amber-600">QUOTATION</button>
+                    <button onclick="openPreview('quotation')" class="btn bg-amber-500 text-white text-xs hover:bg-amber-600">QUOTE</button>
                     <button onclick="openPreview('invoice')" class="btn bg-blue-600 text-white text-xs hover:bg-blue-700">INVOICE</button>
-                    
                     <button onclick="openPreview('production')" class="btn bg-teal-600 text-white col-span-2 text-sm shadow">WORK SHEET</button>
                 </div>
             </div>
@@ -249,7 +220,6 @@
 
     <script>
         // --- CONFIGURATION ---
-        // NEW URL PROVIDED
         const SHEET_URL = "https://script.google.com/macros/s/AKfycbzE_crOajjCF5hQYCwKAf5zBwj0kdWRFywquqAFUzA6vnNbrSzK-chKsWrFnXZ7QHpO/exec";
         
         let cart = [];
@@ -259,7 +229,9 @@
         let globalRefNo = "AMS-" + Math.floor(Math.random() * 10000);
 
         window.onload = function() {
-            toggleFormFields(); updateRoomOptions(); loadSavedNumbers();
+            toggleFormFields(); 
+            updateRoomOptions(); 
+            loadSavedNumbers();
             document.getElementById('paymentDate').valueAsDate = new Date();
             if(/Android|iPhone/i.test(navigator.userAgent)) {
                 document.getElementById('mobilePdfMsg').classList.remove('hidden');
@@ -269,91 +241,24 @@
 
         // --- GOOGLE SHEET SYNC ---
         function syncToSheet(data) {
-            document.getElementById('syncLoader').style.display = 'block';
+            document.getElementById('syncLoader').classList.remove('hidden');
             fetch(SHEET_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
             }).then(() => {
-                document.getElementById('syncLoader').style.display = 'none';
+                document.getElementById('syncLoader').classList.add('hidden');
                 console.log("Synced");
             }).catch(e => {
-                document.getElementById('syncLoader').style.display = 'none';
+                document.getElementById('syncLoader').classList.add('hidden');
                 alert("Sync Error (Check Internet): " + e);
             });
         }
 
-        // --- TRANSACTIONS ---
-        function saveInvoiceTransaction() {
-            const m = document.getElementById('mobileNumber').value;
-            const n = document.getElementById('customerName').value;
-            if(!m || !n) return alert("Enter Customer Details");
-
-            const t = cart.reduce((s,i) => s + i.total, 0);
-            const d = parseFloat(document.getElementById('discountAmount').value)||0;
-            const billTotal = t - d;
-            
-            const advance = parseFloat(document.getElementById('advanceAmount').value) || 0;
-            const date = new Date().toLocaleDateString();
-
-            let newBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
-
-            // 1. Log Invoice
-            if(cart.length > 0) {
-                newBal += billTotal;
-                syncToSheet({ date, ref: globalRefNo, type: 'Invoice', name: n, mobile: m, debit: billTotal, credit: 0, balance: newBal });
-            }
-
-            // 2. Log Advance
-            if(advance > 0) {
-                newBal -= advance;
-                syncToSheet({ date, ref: globalRefNo, type: 'Advance', name: n, mobile: m, debit: 0, credit: advance, balance: newBal });
-            }
-
-            // Local Save
-            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
-            db[m] = { name: n, balance: newBal };
-            localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
-
-            alert("Saved to Sheet & Local!");
-            fetchCustomerDetails();
-        }
-
-        function saveReceipt() {
-             const amt = parseFloat(document.getElementById('receiptAmount').value);
-             const mode = document.getElementById('paymentMode').value;
-             const date = document.getElementById('paymentDate').value;
-             const chq = document.getElementById('chequeNumber').value;
-             const m = document.getElementById('mobileNumber').value;
-             const n = document.getElementById('customerName').value;
-
-             if(!amt || !m) return alert("Amount and Customer ID required");
-
-             let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
-             let curBal = db[m] ? db[m].balance : 0;
-             let newBal = curBal - amt;
-             
-             db[m] = { name: n, balance: newBal };
-             localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
-
-             let type = `Receipt (${mode})`;
-             if(chq) type += ` #${chq}`;
-             syncToSheet({ date, ref: "REC", type: type, name: n, mobile: m, debit: 0, credit: amt, balance: newBal });
-
-             document.getElementById('receiptModal').style.display='none';
-             fetchCustomerDetails();
-             
-             // Update advance view
-             const curAdv = parseFloat(document.getElementById('advanceAmount').value)||0;
-             document.getElementById('advanceAmount').value = curAdv + amt;
-             updateTotals();
-
-             generateReceiptPDF(amt, mode, date, chq);
-        }
-
-        // --- PDF ENGINE ---
+        // --- PDF ENGINE (FIXED) ---
         function openPreview(type, filterSupplier = null) {
+            currentDocType = type;
             const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
             
             if (cart.length === 0 && prevBal === 0 && (type === 'invoice' || type === 'quotation')) return alert("Nothing to print!");
@@ -414,7 +319,6 @@
                     doc.text("Outstanding Balance Statement", 105, 60, null, null, "center");
                 }
 
-                // FOOTER
                 let y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 5 : 70;
                 
                 const currentTotal = cart.reduce((sum, item) => sum + item.total, 0);
@@ -452,6 +356,92 @@
             } catch (e) { alert("Error: " + e.message); }
         }
 
+        // --- TOGGLE FIELDS FIXED ---
+        function toggleFormFields() { 
+            const cat = document.getElementById('productCategory').value; 
+            const t = document.getElementById('productType'); 
+            const cf = document.getElementById('curtainOptions');
+            const st = document.getElementById('stitchingCharge');
+            t.innerHTML=''; 
+            
+            if(cat==='Curtain') {
+                ['Main (Heavy)', 'Sheer', 'Blackout', 'Linen', 'Velvet', 'Other'].forEach(x => t.add(new Option(x, x))); 
+                cf.classList.remove('hidden'); // Show curtain fields
+                st.classList.remove('hidden');
+            } else {
+                ['Roller Blind', 'Sunscreen', 'Zebra', 'Venetian', 'Vertical', 'Roman', 'Other'].forEach(x => t.add(new Option(x, x))); 
+                cf.classList.add('hidden'); // Hide curtain fields
+                st.classList.add('hidden');
+            } 
+            checkOtherType(); 
+            calculatePreview(); 
+        }
+
+        // --- TRANSACTIONS ---
+        function saveInvoiceTransaction() {
+            const m = document.getElementById('mobileNumber').value;
+            const n = document.getElementById('customerName').value;
+            if(!m || !n) return alert("Enter Customer Details");
+
+            const t = cart.reduce((s,i) => s + i.total, 0);
+            const d = parseFloat(document.getElementById('discountAmount').value)||0;
+            const billTotal = t - d;
+            
+            const advance = parseFloat(document.getElementById('advanceAmount').value) || 0;
+            const date = new Date().toLocaleDateString();
+
+            let newBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0;
+
+            if(cart.length > 0) {
+                newBal += billTotal;
+                syncToSheet({ date, ref: globalRefNo, type: 'Invoice', name: n, mobile: m, debit: billTotal, credit: 0, balance: newBal });
+            }
+
+            if(advance > 0) {
+                newBal -= advance;
+                syncToSheet({ date, ref: globalRefNo, type: 'Advance', name: n, mobile: m, debit: 0, credit: advance, balance: newBal });
+            }
+
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            db[m] = { name: n, balance: newBal };
+            localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
+
+            alert("Saved to Sheet & Local!");
+            fetchCustomerDetails();
+        }
+
+        function saveReceipt() {
+             const amt = parseFloat(document.getElementById('receiptAmount').value);
+             const mode = document.getElementById('paymentMode').value;
+             const date = document.getElementById('paymentDate').value;
+             const chq = document.getElementById('chequeNumber').value;
+             const m = document.getElementById('mobileNumber').value;
+             const n = document.getElementById('customerName').value;
+
+             if(!amt || !m) return alert("Amount and Customer ID required");
+
+             let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+             let curBal = db[m] ? db[m].balance : 0;
+             let newBal = curBal - amt;
+             
+             db[m] = { name: n, balance: newBal };
+             localStorage.setItem('amsilks_db_v2', JSON.stringify(db));
+
+             let type = `Receipt (${mode})`;
+             if(chq) type += ` #${chq}`;
+             syncToSheet({ date, ref: "REC", type: type, name: n, mobile: m, debit: 0, credit: amt, balance: newBal });
+
+             document.getElementById('receiptModal').style.display='none';
+             fetchCustomerDetails();
+             
+             // Update advance view
+             const curAdv = parseFloat(document.getElementById('advanceAmount').value)||0;
+             document.getElementById('advanceAmount').value = curAdv + amt;
+             updateTotals();
+
+             generateReceiptPDF(amt, mode, date, chq);
+        }
+
         // --- RECEIPT PDF ---
         function generateReceiptPDF(amt, mode, date, chq) {
             try {
@@ -468,10 +458,10 @@
                 const blob = doc.output('blob'); currentPDFBlob = blob;
                 document.getElementById('pdfFrame').src = URL.createObjectURL(blob);
                 document.getElementById('pdfModal').style.display='flex';
-            } catch(e) { alert("Receipt Error: " + e.message); }
+            } catch(e) { alert("Receipt PDF Error: " + e.message); }
         }
 
-        // --- LOGIC ---
+        // --- Standard Logic ---
         function calculatePreview() {
             const cat = document.getElementById('productCategory').value;
             const w = parseFloat(document.getElementById('width').value) || 0;
@@ -553,38 +543,13 @@
         function shareViaWhatsApp() { const t = `*AM SILKS*\nRef: ${document.getElementById('customerName').value}\nBal: ${document.getElementById('finalBalance').innerText}`; window.open(`https://wa.me/?text=${encodeURIComponent(t)}`, '_blank'); }
         function resetAll() { if(confirm("Start New Order?")) { cart=[]; document.getElementById('mobileNumber').value=''; document.getElementById('customerName').value=''; document.getElementById('prevBalDisplay').innerText="0.00"; globalRefNo="AMS-"+Math.floor(Math.random()*10000); clearForm(); renderCart(); updateTotals(); } }
         
-        function toggleFormFields() { 
-            const cat = document.getElementById('productCategory').value; 
-            const t = document.getElementById('productType'); 
-            t.innerHTML=''; 
-            const cf = document.querySelectorAll('.curtain-field'); 
-            if(cat==='Curtain') {
-                ['Main (Heavy)', 'Sheer', 'Blackout', 'Linen', 'Velvet', 'Other'].forEach(x => t.add(new Option(x, x))); 
-                cf.forEach(e => e.classList.remove('hidden'));
-            } else {
-                ['Roller Blind', 'Sunscreen', 'Zebra', 'Venetian', 'Vertical', 'Roman', 'Other'].forEach(x => t.add(new Option(x, x))); 
-                cf.forEach(e => e.classList.add('hidden'));
-            } 
-            checkOtherType(); 
-            calculatePreview(); 
-        }
-        
         function checkOtherType() { document.getElementById('customType').classList.toggle('hidden', document.getElementById('productType').value !== 'Other'); }
         function checkCustomFabWidth() { document.getElementById('customFabWidth').classList.toggle('hidden', document.getElementById('fabricWidth').value !== 'custom'); calculatePreview(); }
-        
-        function updateRoomOptions() { 
-            const b = document.getElementById('buildingType').value; 
-            const r = document.getElementById('roomName'); 
-            document.getElementById('towerName').classList.toggle('hidden', b!=='Tower'); 
-            r.innerHTML=''; 
-            let o = (b==='Tower')?['Room A','Room B','Room C','Hall','Kitchen','Maid','Other']:(b==='House'?['Living','Master Bed','Majlis','Guest','Hall','Other']:['Office','Room','Other']); 
-            o.forEach(x=>r.add(new Option(x,x))); 
-        }
+        function updateRoomOptions() { const b = document.getElementById('buildingType').value; const r = document.getElementById('roomName'); document.getElementById('towerName').classList.toggle('hidden', b!=='Tower'); r.innerHTML=''; let o = b==='Tower'?['Room A','Room B','Room C','Hall','Kitchen','Maid','Other']:(b==='House'?['Living','Master Bed','Majlis','Guest','Hall','Other']:['Office','Room','Other']); o.forEach(x=>r.add(new Option(x,x))); }
         function toggleCustomFloor() { document.getElementById('customFloor').classList.toggle('hidden', document.getElementById('floor').value !== 'Other'); }
-        
         function showSupplierSelect() { const s = [...new Set(cart.map(i => i.supplier))]; if(!s.length) return alert("No items"); const c = document.getElementById('supplierListContainer'); c.innerHTML = ''; s.forEach(sup => { const b = document.createElement('div'); b.className = "p-3 border-b font-bold active:bg-gray-100 cursor-pointer"; b.innerText = sup; b.onclick = () => { document.getElementById('supplierModal').style.display = 'none'; openPreview('po', sup); }; c.appendChild(b); }); document.getElementById('supplierModal').style.display = 'flex'; }
-        
-        function editItem(i) { const item = cart[i]; editingIndex = i; document.getElementById('productCategory').value = item.cat; toggleFormFields(); const sT = document.getElementById('productType'); let hasT = false; for(let o of sT.options){if(o.value===item.type)hasT=true;} if(hasT) sT.value=item.type; else { sT.value='Other'; checkOtherType(); document.getElementById('customType').value=item.type; } document.getElementById('fabricName').value = item.fabric; document.getElementById('catalogNo').value = item.catalog||""; document.getElementById('itemSupplier').value = item.supplier; document.getElementById('width').value = item.w; document.getElementById('height').value = item.h; document.getElementById('quantity').value = item.qty; document.getElementById('pricePerUnit').value = item.price; document.getElementById('stitchingCharge').value = item.stitch; document.getElementById('fixingCharge').value = item.fix; document.getElementById('itemNote').value = item.note; document.getElementById('addBtn').innerText = "UPDATE ITEM"; document.getElementById('addBtn').classList.replace('bg-indigo-600', 'bg-orange-600'); }
+        function editItem(i) { const item = cart[i]; editingIndex = i; document.getElementById('productCategory').value = item.cat; toggleFormFields(); const sT = document.getElementById('productType'); let hasT = false; for(let o of sT.options){if(o.value===item.type)hasT=true;} if(hasT) sT.value=item.type; else { sT.value='Other'; checkOtherType(); document.getElementById('customType').value=item.type; } document.getElementById('fabricName').value = item.fabric; document.getElementById('catalogNo').value = item.catalog||""; document.getElementById('width').value = item.w; document.getElementById('height').value = item.h; document.getElementById('quantity').value = item.qty; document.getElementById('pricePerUnit').value = item.price; document.getElementById('stitchingCharge').value = item.stitch; document.getElementById('fixingCharge').value = item.fix; document.getElementById('itemNote').value = item.note; document.getElementById('addBtn').innerText = "UPDATE ITEM"; document.getElementById('addBtn').classList.replace('bg-indigo-600', 'bg-orange-600'); }
+        function saveToAccounts() { const m = document.getElementById('mobileNumber').value.trim(); const n = document.getElementById('customerName').value.trim(); if(!m) return alert("Enter Mobile"); let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {}; const currentTotal = cart.reduce((sum, item) => sum + item.total, 0); const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0; const discount = parseFloat(document.getElementById('discountAmount').value) || 0; const advance = parseFloat(document.getElementById('advanceAmount').value) || 0; const finalBal = (currentTotal + prevBal - discount) - advance; db[m] = { name: n, balance: finalBal }; localStorage.setItem('amsilks_db_v2', JSON.stringify(db)); alert("Account Saved!"); loadSavedNumbers(); }
     </script>
 </body>
 </html>
