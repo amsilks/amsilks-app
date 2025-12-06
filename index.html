@@ -181,7 +181,7 @@
             </div>
             <div class="flex gap-2 mt-4">
                 <button onclick="document.getElementById('receiptModal').style.display='none'" class="btn bg-gray-200 text-gray-600 flex-1">Cancel</button>
-                <button onclick="saveTransaction()" class="btn bg-green-600 text-white flex-1">Save & Print</button>
+                <button onclick="saveReceipt()" class="btn bg-green-600 text-white flex-1">Save & Print</button>
             </div>
         </div>
     </div>
@@ -196,7 +196,7 @@
 
     <script>
         // --- CONFIGURATION ---
-        const SHEET_URL = "https://script.google.com/macros/s/AKfycbwHy0F5L0rxoNf5KI6msdyOTFqCtILXsyvNSfRyDw_Zx83d4g_HFMCi-28An9vlccea/exec";
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycbzE_crOajjCF5hQYCwKAf5zBwj0kdWRFywquqAFUzA6vnNbrSzK-chKsWrFnXZ7QHpO/exec";
         
         let cart = [];
         let editingIndex = -1;
