@@ -238,7 +238,11 @@
     <script>
         const SHEET_URL = "https://script.google.com/macros/s/AKfycbxIdelVyKgSTfTgGlfi5D9KtmkQXmDv436Gegk8rqz3TDbgxXWlxtdhRsoPM6p1vVSu/exec";
         
-        let cart = [], editingIndex = -1, currentPDFBlob = null, currentDocType = '', globalRefNo = "AMS-" + Math.floor(Math.random() * 10000);
+        let cart = [];
+        let editingIndex = -1;
+        let currentPDFBlob = null;
+        let currentDocType = '';
+        let globalRefNo = "AMS-" + Math.floor(Math.random() * 10000);
 
         window.onload = function() {
             toggleFormFields(); 
@@ -264,7 +268,7 @@
                 if (data.found) {
                     document.getElementById('customerName').value = data.name;
                     updateBalanceUI(data.balance);
-                    document.getElementById('foundBadge').classList.remove('hidden');
+                    alert(`Found: ${data.name}`);
                 } else {
                     alert("Not found. New Customer?");
                     updateBalanceUI(0);
@@ -493,6 +497,8 @@
         }
         function checkOtherType() { document.getElementById('customType').classList.toggle('hidden', document.getElementById('productType').value !== 'Other'); }
         function checkCustomFabWidth() { document.getElementById('customFabWidth').classList.toggle('hidden', document.getElementById('fabricWidth').value !== 'custom'); calculatePreview(); }
+        function openReceiptModal() { document.getElementById('receiptModal').style.display='flex'; }
+        function toggleCheque() { document.getElementById('chequeNumber').classList.toggle('hidden', document.getElementById('paymentMode').value !== 'Cheque'); }
         function openInNewTab() { if(currentPDFBlob) window.open(URL.createObjectURL(currentPDFBlob), '_blank'); }
         function shareViaWhatsApp() { const t = `*AM SILKS*\nRef: ${document.getElementById('customerName').value}\nBal: ${document.getElementById('finalBalance').innerText}`; window.open(`https://wa.me/?text=${encodeURIComponent(t)}`, '_blank'); }
         function resetAll() { if(confirm("Start New Order?")) { cart=[]; document.getElementById('mobileNumber').value=''; document.getElementById('customerName').value=''; document.getElementById('prevBalDisplay').innerText="0.00"; globalRefNo="AMS-"+Math.floor(Math.random()*10000); clearForm(); renderCart(); updateTotals(); } }
@@ -556,44 +562,20 @@
             document.getElementById('grandTotal').innerText = (t + p - d).toFixed(2);
             document.getElementById('finalBalance').innerText = ((t + p - d) - a).toFixed(2);
         }
-        function saveInvoiceTransaction() {
-            const m = document.getElementById('mobileNumber').value;
-            const n = document.getElementById('customerName').value;
-            if(!m || !n) return alert("Enter Customer Details");
-
-            const t = cart.reduce((s,i) => s + i.total, 0);
-            const d = parseFloat(document.getElementById('discountAmount').value)||0;
-            const billTotal = t - d;
-            const advance = parseFloat(document.getElementById('advanceAmount').value) || 0;
-            const date = new Date().toLocaleDateString();
-            
-            let currentBal = parseFloat(document.getElementById('mainPrevBal').innerText) || 0;
-            let finalBal = currentBal;
-
-            if(cart.length > 0) {
-                finalBal += billTotal;
-                syncToSheet({ date, ref: globalRefNo, type: 'Invoice', name: n, mobile: m, debit: billTotal, credit: 0, balance: finalBal });
-            }
-            if(advance > 0) {
-                finalBal -= advance;
-                setTimeout(() => {
-                    syncToSheet({ date, ref: globalRefNo, type: 'Advance', name: n, mobile: m, debit: 0, credit: advance, balance: finalBal });
-                }, 1000);
-            }
-            
-            updateBalanceUI(finalBal);
-            alert("Invoice Saved & Cloud Updated!");
+        function loadSavedNumbers() {
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            const list = document.getElementById('savedNumbers'); list.innerHTML = '';
+            Object.keys(db).forEach(n => { let opt = document.createElement('option'); opt.value = n; opt.innerText = db[n].name; list.appendChild(opt); });
         }
-        function syncToSheet(data) {
-            document.getElementById('syncLoader').classList.remove('hidden');
-            fetch(SHEET_URL, {
-                method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
-            }).then(() => { document.getElementById('syncLoader').classList.add('hidden'); });
+        function fetchCustomerDetails() {
+            const m = document.getElementById('mobileNumber').value.trim(); if(m.length<3) return;
+            let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {};
+            if(db[m]) { document.getElementById('customerName').value = db[m].name; document.getElementById('prevBalDisplay').innerText = db[m].balance.toFixed(2); document.getElementById('balanceAlert').classList.remove('hidden'); document.getElementById('foundBadge').classList.remove('hidden'); } 
+            else { document.getElementById('prevBalDisplay').innerText = "0.00"; document.getElementById('balanceAlert').classList.add('hidden'); document.getElementById('foundBadge').classList.add('hidden'); }
+            updateTotals();
         }
-        function loadSavedNumbers() { let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {}; const list = document.getElementById('savedNumbers'); list.innerHTML = ''; Object.keys(db).forEach(n => { let opt = document.createElement('option'); opt.value = n; opt.innerText = db[n].name; list.appendChild(opt); }); }
-        function fetchCustomerDetails() { const m = document.getElementById('mobileNumber').value.trim(); if(m.length<3) return; let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {}; if(db[m]) { document.getElementById('customerName').value = db[m].name; document.getElementById('prevBalDisplay').innerText = db[m].balance.toFixed(2); document.getElementById('balanceAlert').classList.remove('hidden'); document.getElementById('foundBadge').classList.remove('hidden'); } else { document.getElementById('prevBalDisplay').innerText = "0.00"; document.getElementById('balanceAlert').classList.add('hidden'); document.getElementById('foundBadge').classList.add('hidden'); } updateTotals(); }
         function editItem(i) { const item = cart[i]; editingIndex = i; document.getElementById('productCategory').value = item.cat; toggleFormFields(); const sT = document.getElementById('productType'); let hasT = false; for(let o of sT.options){if(o.value===item.type)hasT=true;} if(hasT) sT.value=item.type; else { sT.value='Other'; checkOtherType(); document.getElementById('customType').value=item.type; } document.getElementById('fabricName').value = item.fabric; document.getElementById('catalogNo').value = item.catalog||""; document.getElementById('itemSupplier').value = item.supplier; document.getElementById('width').value = item.w; document.getElementById('height').value = item.h; document.getElementById('quantity').value = item.qty; document.getElementById('pricePerUnit').value = item.price; document.getElementById('stitchingCharge').value = item.stitch; document.getElementById('fixingCharge').value = item.fix; document.getElementById('itemNote').value = item.note; document.getElementById('addBtn').innerText = "UPDATE ITEM"; document.getElementById('addBtn').classList.replace('bg-indigo-600', 'bg-orange-600'); }
-        function toggleCheque() { document.getElementById('chequeNumber').classList.toggle('hidden', document.getElementById('paymentMode').value !== 'Cheque'); }
+        function saveToAccounts() { const m = document.getElementById('mobileNumber').value.trim(); const n = document.getElementById('customerName').value.trim(); if(!m) return alert("Enter Mobile"); let db = JSON.parse(localStorage.getItem('amsilks_db_v2')) || {}; const currentTotal = cart.reduce((sum, item) => sum + item.total, 0); const prevBal = parseFloat(document.getElementById('prevBalDisplay').innerText) || 0; const discount = parseFloat(document.getElementById('discountAmount').value) || 0; const advance = parseFloat(document.getElementById('advanceAmount').value) || 0; const finalBal = (currentTotal + prevBal - discount) - advance; db[m] = { name: n, balance: finalBal }; localStorage.setItem('amsilks_db_v2', JSON.stringify(db)); alert("Account Saved!"); loadSavedNumbers(); }
     </script>
 </body>
 </html>
